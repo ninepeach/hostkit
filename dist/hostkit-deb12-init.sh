@@ -85,9 +85,10 @@ install_base_packages() {
   apt-get dist-upgrade -y
 
   info "apt: installing base/security packages"
+
   apt-get install -y --no-install-recommends \
     sudo iptables iptables-persistent fail2ban chrony \
-    unattended-upgrades update-notifier-common ca-certificates gnupg \
+    unattended-upgrades apt-config-auto-update ca-certificates gnupg \
     lsb-release software-properties-common openssh-server needrestart
 
   info "apt: installing common utilities"
