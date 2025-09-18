@@ -13,13 +13,13 @@ MODULES=(
   "detect.sh"
   "apt.sh"
   "time.sh"
-  "user.sh"
+  "user_sudo.sh"
   "sshd.sh"
   "unattended.sh"
   "fail2ban.sh"
   "sysctl.sh"
-  "limits.sh"        # <— new
-  "journald.sh"      # <— new
+  "limits.sh"        
+  "journald.sh"      
   "firewall_iptables.sh"
 )
 
