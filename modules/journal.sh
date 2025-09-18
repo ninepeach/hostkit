@@ -1,15 +1,7 @@
 #!/usr/bin/env bash
-# ulimit + journald caps
 set -euo pipefail
 
-set_limits_and_journald() {
-  local lf=/etc/security/limits.d/90-nofile.conf
-  cat >"$lf" <<EOF
-* soft nofile ${LIMIT_NOFILE}
-* hard nofile ${LIMIT_NOFILE}
-root soft nofile ${LIMIT_NOFILE}
-root hard nofile ${LIMIT_NOFILE}
-EOF
+set_journald() {
 
   local jf=/etc/systemd/journald.conf.d/limits.conf
   mkdir -p /etc/systemd/journald.conf.d

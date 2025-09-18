@@ -38,9 +38,10 @@ BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$BASE_DIR/modules/sshd.sh"
 . "$BASE_DIR/modules/unattended.sh"
 . "$BASE_DIR/modules/fail2ban.sh"
-. "$BASE_DIR/modules/firewall_iptables.sh"
 . "$BASE_DIR/modules/sysctl.sh"
+. "$BASE_DIR/modules/limits.sh"
 . "$BASE_DIR/modules/journal.sh"
+. "$BASE_DIR/modules/firewall_iptables.sh"
 . "$BASE_DIR/modules/services.sh"
 . "$BASE_DIR/modules/summary.sh"
 
@@ -58,7 +59,8 @@ main() {
   setup_unattended_upgrades   # keep or comment out per host role
   setup_fail2ban
   sysctl_network_tuning
-  limits_and_journal
+  set_limits
+  set_journal
   firewall_iptables
   reload_services
   print_summary

@@ -381,17 +381,9 @@ EOF
 }
 
 # === module: journal.sh ===
-# ulimit + journald caps
 set -euo pipefail
 
-set_limits_and_journald() {
-  local lf=/etc/security/limits.d/90-nofile.conf
-  cat >"$lf" <<EOF
-* soft nofile ${LIMIT_NOFILE}
-* hard nofile ${LIMIT_NOFILE}
-root soft nofile ${LIMIT_NOFILE}
-root hard nofile ${LIMIT_NOFILE}
-EOF
+set_journald() {
 
   local jf=/etc/systemd/journald.conf.d/limits.conf
   mkdir -p /etc/systemd/journald.conf.d
@@ -427,7 +419,8 @@ main() {
   setup_unattended_upgrades   # keep or comment out per host role
   setup_fail2ban
   sysctl_network_tuning
-  limits_and_journal
+  set_limits
+  set_journal
   firewall_iptables
   reload_services
   print_summary
