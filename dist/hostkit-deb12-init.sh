@@ -360,7 +360,7 @@ firewall_iptables_apply() {
 # Sysctl (network) tuning
 set -euo pipefail
 
-apply_sysctl_network_tuning() {
+sysctl_network_tuning() {
   local f=/etc/sysctl.d/99-tcp-tuning.conf
   cat >"$f" <<'EOF'
 net.core.default_qdisc = fq
