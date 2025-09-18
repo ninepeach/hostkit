@@ -26,12 +26,10 @@ SUDO_TIMESTAMP_TIMEOUT="${SUDO_TIMESTAMP_TIMEOUT:-15}"
 ##########################################
 
 # === module: log.sh ===
-set -euo pipefail
 info(){ echo "[INFO] $*"; }
 warn(){ echo "[WARN] $*" >&2; }
 die(){ echo "[ERROR] $*" >&2; exit 1; }
 # === module: detect.sh ===
-set -euo pipefail
 
 assert_root(){ [[ $EUID -eq 0 ]] || die "Run as root"; }
 
@@ -76,7 +74,6 @@ preflight_guard() {
 }
 
 # === module: apt.sh ===
-set -euo pipefail
 
 install_base_packages() {
   export DEBIAN_FRONTEND=noninteractive
@@ -103,7 +100,6 @@ install_base_packages() {
 }
 
 # === module: time.sh ===
-set -euo pipefail
 
 setup_timezone_ntp() {
   info "time: timezone=$TIMEZONE, enabling chrony"
@@ -111,84 +107,11 @@ setup_timezone_ntp() {
   systemctl enable --now chrony || true
 }
 
-# === module: user_sudo.sh ===
-set -euo pipefail
-
-create_user() {
-  if ! id "$NEW_USER" &>/dev/null; then
-    info "user: creating $NEW_USER"
-    adduser --disabled-password --gecos "" "$NEW_USER"
-  fi
-  usermod -aG sudo "$NEW_USER"
-
-  if [[ -n "${NEW_USER_PASSWORD:-}" ]]; then
-    echo "${NEW_USER}:${NEW_USER_PASSWORD}" | chpasswd
-  fi
-
-  local sshdir="/home/${NEW_USER}/.ssh"
-  local authfile="${sshdir}/authorized_keys"
-  mkdir -p "$sshdir"
-  chmod 700 "$sshdir"
-  touch "$authfile"
-
-  # Only support newline-separated keys
-  if [[ -n "${SSH_PUBKEY:-}" && "${SSH_PUBKEY}" != "ssh-ed25519 AAAA... your_key_comment" ]]; then
-    # Append keys (split by newline only)
-    printf '%s\n' "$SSH_PUBKEY" | tr -d '\r' | grep -v '^[[:space:]]*$' >> "$authfile"
-
-    # Deduplicate while preserving order
-    awk '!seen[$0]++' "$authfile" > "${authfile}.tmp" && mv "${authfile}.tmp" "$authfile"
-
-    chmod 600 "$authfile"
-    chown -R "${NEW_USER}:${NEW_USER}" "$sshdir"
-    info "SSH: public key(s) installed for ${NEW_USER}"
-  else
-    info "SSH: no public key provided, leaving ${authfile} as-is"
-    if [[ "${ALLOW_PASSWORD_SSH:-false}" != "true" ]]; then
-      warn "SSH: PasswordAuthentication is disabled and no SSH_PUBKEY provided; you may lock yourself out."
-    fi
-  fi
-}
-
-ensure_sudo_ready() {
-  info "sudo: configuring sudoers drop-ins"
-  if ! grep -qE '^[[:space:]]*#includedir[[:space:]]+/etc/sudoers.d' /etc/sudoers; then
-    echo '#includedir /etc/sudoers.d' >> /etc/sudoers
-  fi
-
-  mkdir -p /etc/sudoers.d
-  chmod 750 /etc/sudoers.d
-
-  local d1="/etc/sudoers.d/00-defaults"
-  {
-    echo "Defaults secure_path=\"$SUDO_SECURE_PATH\""
-    echo "Defaults env_reset"
-    echo "Defaults umask=022"
-    echo "Defaults timestamp_timeout=${SUDO_TIMESTAMP_TIMEOUT}"
-    if [[ -n "${SUDO_LOGFILE}" ]]; then
-      echo "Defaults logfile=\"$SUDO_LOGFILE\""
-      touch "$SUDO_LOGFILE"; chmod 0600 "$SUDO_LOGFILE"; chown root:root "$SUDO_LOGFILE"
-    fi
-  } > "$d1"
-  chmod 0440 "$d1"
-
-  echo "%sudo ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-sudo-group
-  chmod 0440 /etc/sudoers.d/10-sudo-group
-
-  local d3="/etc/sudoers.d/90-${NEW_USER}"
-  if [[ "${NEW_USER_SUDO_NOPASSWD}" == "true" ]]; then
-    echo "${NEW_USER} ALL=(ALL) NOPASSWD:ALL" > "$d3"
-  else
-    echo "${NEW_USER} ALL=(ALL) ALL" > "$d3"
-  fi
-  chmod 0440 "$d3"
-
-  visudo -c >/dev/null
-}
+# === module: user.sh ===
+echo "[WARN] module missing: user.sh" >&2
 
 # === module: sshd.sh ===
 # SSH daemon hardening
-set -euo pipefail
 
 setup_sshd_security() {
   local cfg="/etc/ssh/sshd_config"
@@ -232,7 +155,6 @@ reload_sshd() {
 
 # === module: unattended.sh ===
 # Unattended upgrades (security)
-set -euo pipefail
 
 setup_unattended_upgrades() {
   dpkg-reconfigure -fnoninteractive unattended-upgrades || true
@@ -245,7 +167,6 @@ EOF
 
 # === module: fail2ban.sh ===
 # Fail2Ban baseline
-set -euo pipefail
 
 setup_fail2ban() {
   systemctl enable --now fail2ban || true
@@ -269,9 +190,83 @@ EOF
   systemctl restart fail2ban || true
 }
 
+# === module: sysctl.sh ===
+# Sysctl (network) tuning
+
+sysctl_network_tuning() {
+  local f=/etc/sysctl.d/99-tcp-tuning.conf
+  cat >"$f" <<'EOF'
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+net.core.somaxconn = 4096
+net.core.netdev_max_backlog = 16384
+net.ipv4.tcp_max_syn_backlog = 4096
+net.ipv4.ip_local_port_range = 10240 65535
+net.ipv4.tcp_rmem = 4096 87380 33554432
+net.ipv4.tcp_wmem = 4096 65536 33554432
+net.ipv4.tcp_fin_timeout = 15
+net.ipv4.tcp_keepalive_time = 600
+net.ipv4.tcp_keepalive_intvl = 30
+net.ipv4.tcp_keepalive_probes = 5
+net.ipv4.tcp_fastopen = 3
+EOF
+  sysctl --system >/dev/null
+}
+
+# === module: limits.sh ===
+
+set_limits() {
+  ulimit -n ${LIMIT_NOFILE}
+
+  # clamp to kernel maximum to avoid invalid settings
+  local nr_open
+  nr_open=$(cat /proc/sys/fs/nr_open 2>/dev/null || echo 1048576)
+  if (( LIMIT_NOFILE > nr_open )); then
+    warn "LIMIT_NOFILE(${LIMIT_NOFILE}) > fs.nr_open(${nr_open}); clamping to ${nr_open}"
+    LIMIT_NOFILE="${nr_open}"
+  fi
+
+  # 1) PAM limits: affects new login sessions (sshd/tty)
+  local lf=/etc/security/limits.d/90-nofile.conf
+  cat >"$lf" <<EOF
+* soft nofile ${LIMIT_NOFILE}
+* hard nofile ${LIMIT_NOFILE}
+root soft nofile ${LIMIT_NOFILE}
+root hard nofile ${LIMIT_NOFILE}
+EOF
+
+  # 2) systemd default limits: affects systemd-managed services after restart
+  #    (use a drop-in so we don't overwrite vendor file)
+  local sysd_dir=/etc/systemd/system.conf.d
+  mkdir -p "$sysd_dir"
+  cat >"${sysd_dir}/90-nofile.conf" <<EOF
+[Manager]
+DefaultLimitNOFILE=${LIMIT_NOFILE}
+EOF
+
+  # apply systemd manager config without reboot
+  systemctl daemon-reexec || true
+
+  # 3) convenience for interactive shells: set soft limit on login
+  #    (doesn't override PAM hard limit; new shells pick it up)
+  cat >/etc/profile.d/90-nofile.sh <<EOF
+# Set soft nofile for interactive shells; hard limit is defined by PAM limits.d
+# This file is generated by hostkit.
+if [ "\$-" != "\${-#*i}" ]; then
+  # interactive shell
+  ulimit -n ${LIMIT_NOFILE} 2>/dev/null || true
+fi
+EOF
+  chmod 0644 /etc/profile.d/90-nofile.sh
+
+  info "limits: nofile set to ${LIMIT_NOFILE} (PAM + systemd default). New logins/services will see it."
+  info "limits: current shell won't change; re-login for interactive shells, restart services to apply."
+}
+# === module: journald.sh ===
+echo "[WARN] module missing: journald.sh" >&2
+
 # === module: firewall_iptables.sh ===
 # iptables (IPv4 + IPv6) with persistence
-set -euo pipefail
 
 firewall_iptables_apply() {
   info "Applying iptables rules (IPv4)..."
@@ -354,56 +349,6 @@ firewall_iptables_apply() {
   netfilter-persistent save || true
   systemctl enable netfilter-persistent || true
   systemctl start netfilter-persistent || true
-}
-
-# === module: sysctl.sh ===
-# Sysctl (network) tuning
-set -euo pipefail
-
-sysctl_network_tuning() {
-  local f=/etc/sysctl.d/99-tcp-tuning.conf
-  cat >"$f" <<'EOF'
-net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = bbr
-net.core.somaxconn = 4096
-net.core.netdev_max_backlog = 16384
-net.ipv4.tcp_max_syn_backlog = 4096
-net.ipv4.ip_local_port_range = 10240 65535
-net.ipv4.tcp_rmem = 4096 87380 33554432
-net.ipv4.tcp_wmem = 4096 65536 33554432
-net.ipv4.tcp_fin_timeout = 15
-net.ipv4.tcp_keepalive_time = 600
-net.ipv4.tcp_keepalive_intvl = 30
-net.ipv4.tcp_keepalive_probes = 5
-net.ipv4.tcp_fastopen = 3
-EOF
-  sysctl --system >/dev/null
-}
-
-# === module: journal.sh ===
-set -euo pipefail
-
-set_journald() {
-
-  local jf=/etc/systemd/journald.conf.d/limits.conf
-  mkdir -p /etc/systemd/journald.conf.d
-  cat >"$jf" <<EOF
-[Journal]
-SystemMaxUse=${JOURNALD_MAXUSE}
-RuntimeMaxUse=${JOURNALD_MAXUSE}
-Storage=auto
-Compress=yes
-Seal=yes
-EOF
-  systemctl restart systemd-journald || true
-}
-
-# === module: services.sh ===
-set -euo pipefail
-
-reload_services() {
-  info "services: reloading sshd"
-  systemctl reload ssh || systemctl restart ssh
 }
 
 main() {
