@@ -61,7 +61,7 @@ main() {
   sysctl_network_tuning
   set_limits
   set_journald
-  firewall_iptables
+  firewall_iptables_apply
   reload_services
   print_summary
 }
