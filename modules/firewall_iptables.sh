@@ -16,9 +16,20 @@ firewall_iptables_apply() {
   iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 
   # SSH with light rate-limit
-  iptables -A INPUT -p tcp --dport "${SSH_PORT}" -m conntrack --ctstate NEW \
-           -m hashlimit --hashlimit-name ssh --hashlimit 10/min --hashlimit-burst 20 --hashlimit-mode srcip \
-           -j ACCEPT
+  if [[ "${SSH_PORT}" == "22" ]]; then
+    # only 22 with rate-limit
+    iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW \
+             -m hashlimit --hashlimit-name ssh --hashlimit 10/min --hashlimit-burst 20 --hashlimit-mode srcip \
+             -j ACCEPT
+  else
+    # new SSH port with rate-limit
+    iptables -A INPUT -p tcp --dport "${SSH_PORT}" -m conntrack --ctstate NEW \
+             -m hashlimit --hashlimit-name ssh --hashlimit 10/min --hashlimit-burst 20 --hashlimit-mode srcip \
+             -j ACCEPT
+    # keep 22 with rate-limit
+    iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
+  fi
+
 
   [[ "${ALLOW_HTTP}" == "true"  ]] && iptables -A INPUT -p tcp --dport 80  -j ACCEPT
   [[ "${ALLOW_HTTPS}" == "true" ]] && iptables -A INPUT -p tcp --dport 443 -j ACCEPT
@@ -44,9 +55,17 @@ firewall_iptables_apply() {
   ip6tables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
   ip6tables -A INPUT -p ipv6-icmp -j ACCEPT
 
-  ip6tables -A INPUT -p tcp --dport "${SSH_PORT}" -m conntrack --ctstate NEW \
-            -m hashlimit --hashlimit-name ssh6 --hashlimit 10/min --hashlimit-burst 20 --hashlimit-mode srcip \
-            -j ACCEPT
+  # SSH with light rate-limit
+  if [[ "${SSH_PORT}" == "22" ]]; then
+    ip6tables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW \
+              -m hashlimit --hashlimit-name ssh6 --hashlimit 10/min --hashlimit-burst 20 --hashlimit-mode srcip \
+              -j ACCEPT
+  else
+    ip6tables -A INPUT -p tcp --dport "${SSH_PORT}" -m conntrack --ctstate NEW \
+              -m hashlimit --hashlimit-name ssh6 --hashlimit 10/min --hashlimit-burst 20 --hashlimit-mode srcip \
+              -j ACCEPT
+    ip6tables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
+  fi
 
   [[ "${ALLOW_HTTP}" == "true"  ]] && ip6tables -A INPUT -p tcp --dport 80  -j ACCEPT
   [[ "${ALLOW_HTTPS}" == "true" ]] && ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT

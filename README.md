@@ -14,4 +14,6 @@ Opinionated bootstrap & hardening scripts for Debian 12 servers.
 ## Quick start
 ```bash
 # on the target Debian 12 host as root
-curl -fsSL https://raw.githubusercontent.com/ninepeach/hostkit/scripts/deb12-init.sh | bash
+
+export NEW_USER=devops SSH_PUBKEY="ssh-ed25519 AAAA... dev@box" SSH_PORT=2222
+curl -fsSL https://raw.githubusercontent.com/ninepeach/hostkit/main/dist/hostkit-deb12-init.sh | bash
