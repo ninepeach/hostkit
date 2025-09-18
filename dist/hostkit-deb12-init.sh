@@ -333,8 +333,22 @@ EOF
   info "limits: nofile set to ${LIMIT_NOFILE} (PAM + systemd default). New logins/services will see it."
   info "limits: current shell won't change; re-login for interactive shells, restart services to apply."
 }
-# === module: journald.sh ===
-echo "[WARN] module missing: journald.sh" >&2
+# === module: journal.sh ===
+
+set_journald() {
+
+  local jf=/etc/systemd/journald.conf.d/limits.conf
+  mkdir -p /etc/systemd/journald.conf.d
+  cat >"$jf" <<EOF
+[Journal]
+SystemMaxUse=${JOURNALD_MAXUSE}
+RuntimeMaxUse=${JOURNALD_MAXUSE}
+Storage=auto
+Compress=yes
+Seal=yes
+EOF
+  systemctl restart systemd-journald || true
+}
 
 # === module: firewall_iptables.sh ===
 # iptables (IPv4 + IPv6) with persistence

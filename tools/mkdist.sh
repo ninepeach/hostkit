@@ -19,7 +19,7 @@ MODULES=(
   "fail2ban.sh"
   "sysctl.sh"
   "limits.sh"        
-  "journald.sh"      
+  "journal.sh"      
   "firewall_iptables.sh"
 )
 
