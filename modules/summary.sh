@@ -15,6 +15,18 @@ print_summary() {
   echo "journald cap:   ${JOURNALD_MAXUSE}"
   [[ -n "${SUDO_LOGFILE}" ]] && echo "sudo logfile:  ${SUDO_LOGFILE}"
   echo "sudo timeout:   ${SUDO_TIMESTAMP_TIMEOUT} min"
+
+  # Show installed SSH key count
+  local sshdir="/home/${NEW_USER}/.ssh"
+  local authfile="${sshdir}/authorized_keys"
+  if [[ -f "$authfile" ]]; then
+    local key_count
+    key_count=$(grep -cve '^[[:space:]]*$' "$authfile" || true)
+    echo "SSH keys:       ${key_count}"
+  else
+    echo "SSH keys:       <none>"
+  fi
+
   echo "=============================================="
   echo "Tip: verify you can log in via the new SSH port before closing your current session."
 }

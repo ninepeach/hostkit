@@ -28,13 +28,13 @@ preflight_guard() {
     echo "This would lock you out of the server."
     echo
     echo "✅ Correct usage examples:"
-    echo "  # Option 1: provide a public key (recommended)"
-    echo "  SSH_PUBKEY='ssh-ed25519 AAAA... you@host' \\"
-    echo "    bash deb12-init.sh"
+    echo "  # Option 1: provide one or more public keys (recommended)"
+    echo "  SSH_PUBKEY=$'ssh-ed25519 AAAA... user1@host\nssh-rsa BBBB... user2@laptop' \\"
+    echo "    bash dist/hostkit-deb12-init.sh"
     echo
     echo "  # Option 2: allow password login with a strong password"
     echo "  ALLOW_PASSWORD_SSH=true NEW_USER_PASSWORD='StrongPass#2025' \\"
-    echo "    bash deb12-init.sh"
+    echo "    bash dist/hostkit-deb12-init.sh"
     echo
     exit 1
   fi

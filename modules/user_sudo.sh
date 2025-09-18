@@ -7,19 +7,32 @@ create_user() {
   fi
   usermod -aG sudo "$NEW_USER"
 
-  if [[ -n "${NEW_USER_PASSWORD}" ]]; then
+  if [[ -n "${NEW_USER_PASSWORD:-}" ]]; then
     echo "${NEW_USER}:${NEW_USER_PASSWORD}" | chpasswd
   fi
 
   local sshdir="/home/${NEW_USER}/.ssh"
-  mkdir -p "$sshdir"; chmod 700 "$sshdir"
-  if [[ -n "${SSH_PUBKEY}" ]]; then
-      echo "$SSH_PUBKEY" >"${sshdir}/authorized_keys"
-      chmod 600 "${sshdir}/authorized_keys"
-      chown -R "${NEW_USER}:${NEW_USER}" "$sshdir"
-      info "SSH: public key installed for ${NEW_USER}"
+  local authfile="${sshdir}/authorized_keys"
+  mkdir -p "$sshdir"
+  chmod 700 "$sshdir"
+  touch "$authfile"
+
+  # Only support newline-separated keys
+  if [[ -n "${SSH_PUBKEY:-}" && "${SSH_PUBKEY}" != "ssh-ed25519 AAAA... your_key_comment" ]]; then
+    # Append keys (split by newline only)
+    printf '%s\n' "$SSH_PUBKEY" | tr -d '\r' | grep -v '^[[:space:]]*$' >> "$authfile"
+
+    # Deduplicate while preserving order
+    awk '!seen[$0]++' "$authfile" > "${authfile}.tmp" && mv "${authfile}.tmp" "$authfile"
+
+    chmod 600 "$authfile"
+    chown -R "${NEW_USER}:${NEW_USER}" "$sshdir"
+    info "SSH: public key(s) installed for ${NEW_USER}"
   else
-      info "SSH: no public key provided, skipping authorized_keys"
+    info "SSH: no public key provided, leaving ${authfile} as-is"
+    if [[ "${ALLOW_PASSWORD_SSH:-false}" != "true" ]]; then
+      warn "SSH: PasswordAuthentication is disabled and no SSH_PUBKEY provided; you may lock yourself out."
+    fi
   fi
 }
 

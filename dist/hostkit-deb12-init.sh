@@ -61,13 +61,13 @@ preflight_guard() {
     echo "This would lock you out of the server."
     echo
     echo "✅ Correct usage examples:"
-    echo "  # Option 1: provide a public key (recommended)"
-    echo "  SSH_PUBKEY='ssh-ed25519 AAAA... you@host' \\"
-    echo "    bash deb12-init.sh"
+    echo "  # Option 1: provide one or more public keys (recommended)"
+    echo "  SSH_PUBKEY=$'ssh-ed25519 AAAA... user1@host\nssh-rsa BBBB... user2@laptop' \\"
+    echo "    bash dist/hostkit-deb12-init.sh"
     echo
     echo "  # Option 2: allow password login with a strong password"
     echo "  ALLOW_PASSWORD_SSH=true NEW_USER_PASSWORD='StrongPass#2025' \\"
-    echo "    bash deb12-init.sh"
+    echo "    bash dist/hostkit-deb12-init.sh"
     echo
     exit 1
   fi
@@ -120,19 +120,32 @@ create_user() {
   fi
   usermod -aG sudo "$NEW_USER"
 
-  if [[ -n "${NEW_USER_PASSWORD}" ]]; then
+  if [[ -n "${NEW_USER_PASSWORD:-}" ]]; then
     echo "${NEW_USER}:${NEW_USER_PASSWORD}" | chpasswd
   fi
 
   local sshdir="/home/${NEW_USER}/.ssh"
-  mkdir -p "$sshdir"; chmod 700 "$sshdir"
-  if [[ -n "${SSH_PUBKEY}" ]]; then
-      echo "$SSH_PUBKEY" >"${sshdir}/authorized_keys"
-      chmod 600 "${sshdir}/authorized_keys"
-      chown -R "${NEW_USER}:${NEW_USER}" "$sshdir"
-      info "SSH: public key installed for ${NEW_USER}"
+  local authfile="${sshdir}/authorized_keys"
+  mkdir -p "$sshdir"
+  chmod 700 "$sshdir"
+  touch "$authfile"
+
+  # Only support newline-separated keys
+  if [[ -n "${SSH_PUBKEY:-}" && "${SSH_PUBKEY}" != "ssh-ed25519 AAAA... your_key_comment" ]]; then
+    # Append keys (split by newline only)
+    printf '%s\n' "$SSH_PUBKEY" | tr -d '\r' | grep -v '^[[:space:]]*$' >> "$authfile"
+
+    # Deduplicate while preserving order
+    awk '!seen[$0]++' "$authfile" > "${authfile}.tmp" && mv "${authfile}.tmp" "$authfile"
+
+    chmod 600 "$authfile"
+    chown -R "${NEW_USER}:${NEW_USER}" "$sshdir"
+    info "SSH: public key(s) installed for ${NEW_USER}"
   else
-      info "SSH: no public key provided, skipping authorized_keys"
+    info "SSH: no public key provided, leaving ${authfile} as-is"
+    if [[ "${ALLOW_PASSWORD_SSH:-false}" != "true" ]]; then
+      warn "SSH: PasswordAuthentication is disabled and no SSH_PUBKEY provided; you may lock yourself out."
+    fi
   fi
 }
 
