@@ -353,8 +353,16 @@ EOF
 # === module: services.sh ===
 
 reload_services() {
-  info "services: reloading sshd"
-  systemctl reload ssh || systemctl restart ssh
+  info "Reloading services to apply new configs..."
+
+  # sshd
+  systemctl reload ssh || systemctl restart ssh || true
+
+  # journald
+  systemctl restart systemd-journald || true
+
+  # fail2ban
+  systemctl restart fail2ban || true
 }
 
 # === module: firewall_iptables.sh ===
