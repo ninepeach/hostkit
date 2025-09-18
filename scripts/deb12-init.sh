@@ -60,7 +60,7 @@ main() {
   setup_fail2ban
   sysctl_network_tuning
   set_limits
-  set_journal
+  set_journald
   firewall_iptables
   reload_services
   print_summary

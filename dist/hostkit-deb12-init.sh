@@ -333,7 +333,7 @@ EOF
   info "limits: nofile set to ${LIMIT_NOFILE} (PAM + systemd default). New logins/services will see it."
   info "limits: current shell won't change; re-login for interactive shells, restart services to apply."
 }
-# === module: journal.sh ===
+# === module: journald.sh ===
 
 set_journald() {
 
@@ -450,7 +450,7 @@ main() {
   setup_fail2ban
   sysctl_network_tuning
   set_limits
-  set_journal
+  set_journald
   firewall_iptables
   reload_services
   print_summary
