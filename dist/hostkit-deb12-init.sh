@@ -9,7 +9,7 @@ NEW_USER_SUDO_NOPASSWD="${NEW_USER_SUDO_NOPASSWD:-false}"
 
 SSH_PORT="${SSH_PORT:-22}"
 SSH_PUBKEY="${SSH_PUBKEY:-}"
-ALLOW_PASSWORD_SSH="${ALLOW_PASSWORD_SSH:-true}"   # "true"/"false" -> mapped to yes/no
+ALLOW_PASSWORD_SSH="${ALLOW_PASSWORD_SSH:-false}"   # "true"/"false" -> mapped to yes/no
 
 ALLOW_HTTP="${ALLOW_HTTP:-true}"
 ALLOW_HTTPS="${ALLOW_HTTPS:-true}"
