@@ -350,6 +350,13 @@ EOF
   systemctl restart systemd-journald || true
 }
 
+# === module: services.sh ===
+
+reload_services() {
+  info "services: reloading sshd"
+  systemctl reload ssh || systemctl restart ssh
+}
+
 # === module: firewall_iptables.sh ===
 # iptables (IPv4 + IPv6) with persistence
 
