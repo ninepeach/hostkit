@@ -21,5 +21,5 @@ install_base_packages() {
     build-essential pkg-config make cmake \
     python3 python3-pip \
     man-db bash-completion tree \
-    strace
+    rsyslog strace
 }

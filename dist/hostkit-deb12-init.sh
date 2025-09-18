@@ -5,7 +5,7 @@ set -euo pipefail
 ##### === Configurable variables === #####
 NEW_USER="${NEW_USER:-devops}"
 NEW_USER_PASSWORD="${NEW_USER_PASSWORD:-}"
-NEW_USER_SUDO_NOPASSWD="${NEW_USER_SUDO_NOPASSWD:-false}"
+NEW_USER_SUDO_NOPASSWD="${NEW_USER_SUDO_NOPASSWD:-true}"
 
 SSH_PORT="${SSH_PORT:-22}"
 SSH_PUBKEY="${SSH_PUBKEY:-}"
@@ -96,7 +96,7 @@ install_base_packages() {
     build-essential pkg-config make cmake \
     python3 python3-pip \
     man-db bash-completion tree \
-    strace
+    rsyslog strace
 }
 
 # === module: time.sh ===
@@ -240,27 +240,37 @@ EOF
 # Fail2Ban baseline
 
 setup_fail2ban() {
+  systemctl enable --now rsyslog || true
   systemctl enable --now fail2ban || true
-  local jail="/etc/fail2ban/jail.local"
-  if [[ ! -f "$jail" ]]; then
-    cat >"$jail" <<EOF
-[DEFAULT]
-bantime = 1h
-findtime = 10m
-maxretry = 5
-ignoreip = 127.0.0.1/8 ::1
 
-[sshd]
-enabled = true
-port = ${SSH_PORT}
-logpath = %(sshd_log)s
-backend = systemd
-EOF
-    [[ "$ENVIRONMENT" != "prod" ]] && sed -ri 's/^bantime = .*/bantime = 10m/' "$jail"
+  # neutralize any legacy jail.local (if present), but don't delete it
+  if [[ -f /etc/fail2ban/jail.local ]]; then
+    sed -ri 's/^(backend|logpath|enabled|port)[[:space:]]*=/# \0/' /etc/fail2ban/jail.local || true
   fi
+
+  mkdir -p /etc/fail2ban/jail.d
+  cat >/etc/fail2ban/jail.d/00-defaults.conf <<'EOF'
+[DEFAULT]
+ignoreip  = 127.0.0.1/8 ::1 10.0.0.0/16
+findtime  = 10m
+maxretry  = 5
+bantime   = 1h
+EOF
+
+  cat >/etc/fail2ban/jail.d/sshd.conf <<EOF
+[sshd]
+enabled  = true
+backend  = auto
+logpath  = /var/log/auth.log
+port     = ${SSH_PORT}
+EOF
+
+  if [[ "${ENVIRONMENT:-prod}" != "prod" ]]; then
+    sed -ri 's/^bantime[[:space:]]*=.*/bantime = 10m/' /etc/fail2ban/jail.d/00-defaults.conf
+  fi
+
   systemctl restart fail2ban || true
 }
-
 # === module: sysctl.sh ===
 # Sysctl (network) tuning
 

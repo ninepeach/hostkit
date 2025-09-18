@@ -5,7 +5,7 @@ set -euo pipefail
 ##### === Configurable variables === #####
 NEW_USER="${NEW_USER:-devops}"
 NEW_USER_PASSWORD="${NEW_USER_PASSWORD:-}"
-NEW_USER_SUDO_NOPASSWD="${NEW_USER_SUDO_NOPASSWD:-false}"
+NEW_USER_SUDO_NOPASSWD="${NEW_USER_SUDO_NOPASSWD:-true}"
 
 SSH_PORT="${SSH_PORT:-22}"
 SSH_PUBKEY="${SSH_PUBKEY:-}"
