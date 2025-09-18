@@ -2,6 +2,8 @@
 set -euo pipefail
 
 set_limits() {
+  ulimit -n ${LIMIT_NOFILE}
+
   # clamp to kernel maximum to avoid invalid settings
   local nr_open
   nr_open=$(cat /proc/sys/fs/nr_open 2>/dev/null || echo 1048576)
