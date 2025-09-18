@@ -20,8 +20,9 @@ MODULES=(
   "sysctl.sh"
   "limits.sh"        
   "journald.sh"      
-  "services.sh"      
   "firewall_iptables.sh"
+  "services.sh"      
+  "summary.sh"
 )
 
 {
