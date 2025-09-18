@@ -30,10 +30,10 @@ set -euo pipefail
 info(){ echo "[INFO] $*"; }
 warn(){ echo "[WARN] $*" >&2; }
 die(){ echo "[ERROR] $*" >&2; exit 1; }
-assert_root(){ [[ $EUID -eq 0 ]] || die "Run as root"; }
-
 # === module: detect.sh ===
 set -euo pipefail
+
+assert_root(){ [[ $EUID -eq 0 ]] || die "Run as root"; }
 
 check_debian12() {
   if ! grep -qi "debian" /etc/os-release; then
@@ -42,6 +42,37 @@ check_debian12() {
   if ! grep -qi "bookworm" /etc/os-release; then
     warn "Not Debian 12 (bookworm). Proceeding anyway."
   fi
+}
+
+preflight_guard() {
+  # If SSH public key provided -> OK
+  if [[ -n "${SSH_PUBKEY//[[:space:]]/}" ]]; then
+    echo "[INFO] Preflight: SSH public key provided -> OK"
+    return
+  fi
+
+  # No public key -> require both password auth enabled AND a non-empty user password
+  if [[ "${ALLOW_PASSWORD_SSH}" != "true" || -z "${NEW_USER_PASSWORD}" ]]; then
+    echo "[ERROR] Unsafe configuration detected!"
+    echo "        - No SSH public key provided."
+    echo "        - Root SSH login is disabled by design."
+    echo "        - NEW_USER_PASSWORD is empty OR password login disabled."
+    echo
+    echo "This would lock you out of the server."
+    echo
+    echo "✅ Correct usage examples:"
+    echo "  # Option 1: provide a public key (recommended)"
+    echo "  SSH_PUBKEY='ssh-ed25519 AAAA... you@host' \\"
+    echo "    bash deb12-init.sh"
+    echo
+    echo "  # Option 2: allow password login with a strong password"
+    echo "  ALLOW_PASSWORD_SSH=true NEW_USER_PASSWORD='StrongPass#2025' \\"
+    echo "    bash deb12-init.sh"
+    echo
+    exit 1
+  fi
+
+  echo "[INFO] Preflight: no public key, but password login enabled and NEW_USER_PASSWORD set -> OK"
 }
 
 # === module: apt.sh ===
@@ -350,30 +381,11 @@ reload_services() {
   systemctl reload ssh || systemctl restart ssh
 }
 
-print_summary() {
-  echo "=============================================="
-  echo "Init complete."
-  echo "User:           ${NEW_USER}"
-  echo "SSH Port:       ${SSH_PORT}"
-  echo "Root SSH:       disabled"
-  echo "PasswordAuth:   ${ALLOW_PASSWORD_SSH}"
-  echo "Firewall:       iptables"
-  echo "HTTP/HTTPS:     ${ALLOW_HTTP}/${ALLOW_HTTPS}"
-  echo "Extra Ports:    ${EXTRA_TCP_PORTS:-<none>}"
-  echo "Timezone:       ${TIMEZONE}"
-  echo "nofile limit:   ${LIMIT_NOFILE}"
-  echo "journald cap:   ${JOURNALD_MAXUSE}"
-  [[ -n "${SUDO_LOGFILE}" ]] && echo "sudo logfile:  ${SUDO_LOGFILE}"
-  echo "sudo timeout:   ${SUDO_TIMESTAMP_TIMEOUT} min"
-  echo "=============================================="
-  echo "Tip: verify you can log in via the new SSH port before closing your current session."
-}
-
 main() {
   assert_root
   check_debian12
   preflight_guard
-  
+
   install_base_packages
   setup_timezone_ntp
   create_user

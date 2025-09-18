@@ -28,38 +28,6 @@ SUDO_TIMESTAMP_TIMEOUT="${SUDO_TIMESTAMP_TIMEOUT:-15}"
 # locate repo root and modules
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-
-preflight_guard() {
-  # If SSH public key provided -> OK
-  if [[ -n "${SSH_PUBKEY//[[:space:]]/}" ]]; then
-    echo "[INFO] Preflight: SSH public key provided -> OK"
-    return
-  fi
-
-  # No public key -> require both password auth enabled AND a non-empty user password
-  if [[ "${ALLOW_PASSWORD_SSH}" != "true" || -z "${NEW_USER_PASSWORD}" ]]; then
-    echo "[ERROR] Unsafe configuration detected!"
-    echo "        - No SSH public key provided."
-    echo "        - Root SSH login is disabled by design."
-    echo "        - NEW_USER_PASSWORD is empty OR password login disabled."
-    echo
-    echo "This would lock you out of the server."
-    echo
-    echo "✅ Correct usage examples:"
-    echo "  # Option 1: provide a public key (recommended)"
-    echo "  SSH_PUBKEY='ssh-ed25519 AAAA... you@host' \\"
-    echo "    bash deb12-init.sh"
-    echo
-    echo "  # Option 2: allow password login with a strong password"
-    echo "  ALLOW_PASSWORD_SSH=true NEW_USER_PASSWORD='StrongPass#2025' \\"
-    echo "    bash deb12-init.sh"
-    echo
-    exit 1
-  fi
-
-  echo "[INFO] Preflight: no public key, but password login enabled and NEW_USER_PASSWORD set -> OK"
-}
-
 # === modules ===
 # shellcheck source=../modules/*.sh
 . "$BASE_DIR/modules/log.sh"
@@ -74,12 +42,14 @@ preflight_guard() {
 . "$BASE_DIR/modules/sysctl.sh"
 . "$BASE_DIR/modules/journal.sh"
 . "$BASE_DIR/modules/services.sh"
+. "$BASE_DIR/modules/summary.sh"
+
 
 main() {
   assert_root
   check_debian12
   preflight_guard
-  
+
   install_base_packages
   setup_timezone_ntp
   create_user
