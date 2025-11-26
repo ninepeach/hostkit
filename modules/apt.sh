@@ -9,17 +9,21 @@ install_base_packages() {
   info "apt: installing base/security packages"
 
   apt-get install -y --no-install-recommends \
-    sudo iptables iptables-persistent fail2ban chrony \
-    unattended-upgrades apt-config-auto-update ca-certificates gnupg \
-    lsb-release software-properties-common openssh-server needrestart
+    sudo ca-certificates gnupg lsb-release \
+    software-properties-common needrestart \
+    bash-completion rsyslog \
+    unattended-upgrades apt-config-auto-update \
+    chrony openssh-server
 
   info "apt: installing common utilities"
   apt-get install -y --no-install-recommends \
-    vim nano less htop tmux screen \
-    curl wget rsync git unzip zip tar jq \
+    vim nano less tree \
+    htop tmux screen \
+    curl wget rsync \
+    unzip zip tar jq \
     net-tools iproute2 dnsutils \
+    strace lsof ncdu mtr-tiny traceroute nmap \
     build-essential pkg-config make cmake \
     python3 python3-pip \
-    man-db bash-completion tree \
-    rsyslog strace
+    git
 }
