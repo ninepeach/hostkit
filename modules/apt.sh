@@ -2,16 +2,16 @@ set -euo pipefail
 
 install_base_packages() {
   export DEBIAN_FRONTEND=noninteractive
+
   info "apt: updating & upgrading"
-  apt-get update -y
+  apt-get update
   apt-get dist-upgrade -y
 
   info "apt: installing base/security packages"
-
   apt-get install -y --no-install-recommends \
     sudo ca-certificates gnupg lsb-release \
     software-properties-common needrestart \
-    bash-completion rsyslog \
+    rsyslog man-db bash-completion \
     unattended-upgrades apt-config-auto-update \
     chrony openssh-server
 
