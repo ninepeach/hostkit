@@ -10,10 +10,9 @@ install_base_packages() {
   info "apt: installing base/security packages"
   apt-get install -y --no-install-recommends \
     sudo ca-certificates gnupg lsb-release \
-    software-properties-common needrestart \
     rsyslog man-db bash-completion \
     unattended-upgrades apt-config-auto-update \
-    chrony openssh-server
+    chrony openssh-server needrestart
 
   info "apt: installing common utilities"
   apt-get install -y --no-install-recommends \
