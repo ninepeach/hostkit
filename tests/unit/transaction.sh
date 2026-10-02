@@ -49,22 +49,13 @@ test_not_ok "systemd-run failure leaves transaction unarmed" transaction_arm "$r
 test_eq "failed arm remains unarmed" "0" "$HOSTKIT_TRANSACTION_ARMED"
 mock_end
 
-transaction_begin router
+transaction_begin timer-race
 mock_begin
 mock_command systemd-run 'exit 0'
-mock_command systemctl 'case "$*" in "stop "*.timer) exit 1 ;; "status "*.timer) exit 0 ;; *) exit 0 ;; esac'
+mock_command systemctl 'case "$*" in "stop "*.timer) exit 1 ;; *) exit 0 ;; esac'
 transaction_arm "$rollback" 180
-test_not_ok "timer stop failure makes commit fail" transaction_commit
-test_eq "failed disarm remains armed" "1" "$HOSTKIT_TRANSACTION_ARMED"
-mock_end
-
-transaction_begin collected
-mock_begin
-mock_command systemd-run 'exit 0'
-mock_command systemctl 'case "$*" in "stop "*.timer) exit 1 ;; "status "*.timer) exit 1 ;; *) exit 0 ;; esac'
-transaction_arm "$rollback" 180
-test_ok "already-collected timer does not make commit fail" transaction_commit
-test_eq "collected timer commit clears armed state" "0" "$HOSTKIT_TRANSACTION_ARMED"
+test_ok "guard-first commit survives timer stop race" transaction_commit
+test_eq "timer race commit clears armed state" "0" "$HOSTKIT_TRANSACTION_ARMED"
 mock_end
 
 test_not_ok "rollback requires armed transaction after fresh begin" bash -c '
