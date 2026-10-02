@@ -4,13 +4,15 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 PRODUCT="${1:-}"
 
-case "$PRODUCT" in
-    init|security|router) ;;
-    *)
-        printf 'Usage: %s {init|security|router}\n' "$0" >&2
-        exit 2
-        ;;
-esac
+if [ -z "$PRODUCT" ]; then
+    printf 'Usage: %s <product>\n' "$0" >&2
+    exit 2
+fi
+
+if [[ ! "$PRODUCT" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+    printf 'ERROR Invalid product name: %s\n' "$PRODUCT" >&2
+    exit 2
+fi
 
 BUILD_FILE="$ROOT_DIR/debian/build/$PRODUCT.sh"
 OUTPUT="$ROOT_DIR/dist/debian13-$PRODUCT.sh"
