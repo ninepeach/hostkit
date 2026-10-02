@@ -24,8 +24,9 @@ router_firewall_render() {
 table inet $filter_table {
     chain forward {
         type filter hook forward priority 0; policy drop;
+        ct state invalid drop
+        ct state established,related accept
         iifname "$lan" oifname "$wan" accept
-        iifname "$wan" oifname "$lan" ct state established,related accept
     }
 }
 table ip $nat_table {
