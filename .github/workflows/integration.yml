@@ -12,6 +12,9 @@ on:
       - 'debian/modules/nat.sh'
       - 'debian/modules/router-firewall.sh'
       - 'debian/modules/network.sh'
+      - 'debian/modules/dhcp.sh'
+      - 'debian/modules/router-config.sh'
+      - 'debian/build/router.sh'
       - 'tests/integration/**'
       - '.github/workflows/integration.yml'
 
