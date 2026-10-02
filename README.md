@@ -129,7 +129,19 @@ dist/
 └── debian13-router.sh
 ```
 
-Build instructions will be added when the first distribution script is implemented.
+INIT can now be built from the repository root with:
+
+```bash
+./tools/build.sh init
+```
+
+The generated artifact is:
+
+```text
+dist/debian13-init.sh
+```
+
+SECURITY and ROUTER build definitions are not implemented yet.
 
 ## Documentation
 
