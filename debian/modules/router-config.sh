@@ -65,6 +65,8 @@ router_config_validate() {
         dhcp_validate_range "$DHCP_RANGE" || { die "Invalid DHCP_RANGE: $DHCP_RANGE"; return 1; }
         dhcp_range_within_cidr "$LAN_ADDRESS" "$DHCP_RANGE" ||
             { die "DHCP_RANGE must be within LAN_ADDRESS subnet."; return 1; }
+        dhcp_range_usable_for_lan "$LAN_ADDRESS" "$DHCP_RANGE" ||
+            { die "DHCP_RANGE overlaps the LAN gateway or subnet boundary."; return 1; }
     fi
 
     if [ "$UPLINK_MODE" = "pppoe" ]; then
