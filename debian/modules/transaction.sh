@@ -21,6 +21,7 @@ transaction_begin() {
     HOSTKIT_TRANSACTION_ARMED=0
     HOSTKIT_TRANSACTION_UNIT=
     HOSTKIT_TRANSACTION_ROLLBACK=
+    HOSTKIT_TRANSACTION_GUARD=
 }
 
 transaction_arm() {
@@ -33,38 +34,61 @@ transaction_arm() {
     [ "${HOSTKIT_TRANSACTION_ARMED:-0}" -eq 0 ] || { die "Transaction is already armed."; return 1; }
 
     local unit="hostkit-rollback-${HOSTKIT_TRANSACTION_NAME}-$$"
+    local guard="/run/${unit}.armed"
+    local wrapper
+    wrapper="$(mktemp)"
+    cat >"$wrapper" <<EOF
+#!/usr/bin/env bash
+set -eu
+[ -e "$guard" ] || exit 0
+exec "$rollback_script"
+EOF
+    chmod 700 "$wrapper" || { rm -f "$wrapper"; return 1; }
+    : >"$guard" || { rm -f "$wrapper"; return 1; }
+    chmod 600 "$guard" || { rm -f "$guard" "$wrapper"; return 1; }
 
-    # --on-active creates <unit>.timer and a matching <unit>.service.
-    # The rollback script is executed by PID 1, independent of the initiating SSH session.
     systemd-run \
         --quiet \
         --unit="$unit" \
         --on-active="${timeout}s" \
         --timer-property=AccuracySec=1s \
         --collect \
-        "$rollback_script" || return 1
+        "$wrapper" || { rm -f "$guard" "$wrapper"; return 1; }
 
     HOSTKIT_TRANSACTION_UNIT="$unit"
     HOSTKIT_TRANSACTION_ROLLBACK="$rollback_script"
+    HOSTKIT_TRANSACTION_GUARD="$guard"
+    HOSTKIT_TRANSACTION_WRAPPER="$wrapper"
     HOSTKIT_TRANSACTION_ARMED=1
 }
 
 transaction_disarm() {
     [ "${HOSTKIT_TRANSACTION_ARMED:-0}" -eq 1 ] || return 0
     local unit="${HOSTKIT_TRANSACTION_UNIT:?}"
+    local guard="${HOSTKIT_TRANSACTION_GUARD:-}"
+    local wrapper="${HOSTKIT_TRANSACTION_WRAPPER:-}"
 
-    # Stopping the timer first prevents future activation. A service may already
-    # have started at the timeout boundary, so stop it as well.
+    # Remove the commit guard before touching systemd. Even if the timer races
+    # with commit, a rollback process that has not crossed this check becomes a no-op.
+    [ -z "$guard" ] || rm -f "$guard" || {
+        die "Failed to remove rollback guard: $guard"
+        return 1
+    }
+
     systemctl stop "${unit}.timer" >/dev/null 2>&1 || {
         die "Failed to disarm rollback timer: ${unit}.timer"
         return 1
     }
-    systemctl stop "${unit}.service" >/dev/null 2>&1 || true
+    # Do not kill an already-running rollback service here: it may have crossed
+    # the guard before commit. Let it finish rather than interrupt recovery.
     systemctl reset-failed "${unit}.service" >/dev/null 2>&1 || true
+    [ -z "$wrapper" ] || rm -f "$wrapper" || true
 
     HOSTKIT_TRANSACTION_ARMED=0
     HOSTKIT_TRANSACTION_UNIT=
     HOSTKIT_TRANSACTION_ROLLBACK=
+    HOSTKIT_TRANSACTION_GUARD=
+    HOSTKIT_TRANSACTION_WRAPPER=
 }
 
 transaction_commit() {
@@ -76,6 +100,8 @@ transaction_rollback() {
     local rollback_script="${HOSTKIT_TRANSACTION_ROLLBACK:-}"
     [ -x "$rollback_script" ] || { die "Rollback script is not executable: $rollback_script"; return 1; }
 
+    # Explicit rollback owns recovery now; remove the scheduled guard/timer,
+    # then execute the product-owned rollback synchronously.
     transaction_disarm || return 1
     "$rollback_script"
 }
