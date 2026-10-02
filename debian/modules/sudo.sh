@@ -14,12 +14,14 @@ sudo_hostkit_owned() {
 sudo_install_admin_rule() {
     local user="$1"
     local source_file="$2"
-    local path="/etc/sudoers.d/90-hostkit-$user"
+    local dir="${HOSTKIT_SUDOERS_DIR:-/etc/sudoers.d}"
+    local path="$dir/90-hostkit-$user"
     local tmp
 
     user_validate_name "$user" || { die "Invalid user name: $user"; return 1; }
     [ -r "$source_file" ] || { die "sudo source file is not readable: $source_file"; return 1; }
 
+    mkdir -p "$dir" || return 1
     tmp="$(mktemp)"
     {
         printf '%s\n' '# Managed by HostKit. Do not edit manually.'
