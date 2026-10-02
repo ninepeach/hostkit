@@ -5,6 +5,9 @@ MODULES=(
     apt
     packages
     limits
+    locale
+    hostname
+    timezone
     network-tools
     chrony
     unattended-upgrades
