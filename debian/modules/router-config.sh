@@ -40,6 +40,9 @@ router_config_validate() {
     if [ -n "$UPLINK_MODE" ]; then
         case "$UPLINK_MODE" in dhcp|pppoe) ;; *) die "Invalid UPLINK_MODE: $UPLINK_MODE"; return 1 ;; esac
         [ -n "$UPLINK" ] || { die "UPLINK is required when UPLINK_MODE is set."; return 1; }
+    fi
+
+    if [ -n "$UPLINK" ]; then
         network_validate_interface_name "$UPLINK" || { die "Invalid UPLINK: $UPLINK"; return 1; }
     fi
 
@@ -52,13 +55,25 @@ router_config_validate() {
         return 1
     fi
 
-    if [ -n "$DHCP_RANGE" ] && { [ -z "$LAN" ] || [ -z "$LAN_ADDRESS" ]; }; then
-        die "DHCP_RANGE requires LAN and LAN_ADDRESS."
-        return 1
+    if [ -n "$LAN_ADDRESS" ]; then
+        [ -n "$LAN" ] || { die "LAN_ADDRESS requires LAN."; return 1; }
+        dhcp_validate_ipv4_cidr "$LAN_ADDRESS" || { die "Invalid LAN_ADDRESS: $LAN_ADDRESS"; return 1; }
+    fi
+
+    if [ -n "$DHCP_RANGE" ]; then
+        [ -n "$LAN" ] && [ -n "$LAN_ADDRESS" ] || { die "DHCP_RANGE requires LAN and LAN_ADDRESS."; return 1; }
+        dhcp_validate_range "$DHCP_RANGE" || { die "Invalid DHCP_RANGE: $DHCP_RANGE"; return 1; }
     fi
 
     if [ "$UPLINK_MODE" = "pppoe" ]; then
         [ -n "$PPPOE_USER" ] || { die "PPPOE_USER is required for PPPoE."; return 1; }
         [ -n "$PPPOE_SECRET_FILE" ] || { die "PPPOE_SECRET_FILE is required for PPPoE."; return 1; }
+        pppoe_validate_user "$PPPOE_USER" || { die "Invalid PPPOE_USER."; return 1; }
+        pppoe_validate_secret_file "$PPPOE_SECRET_FILE" || { die "Invalid PPPOE_SECRET_FILE."; return 1; }
+    else
+        if [ -n "$PPPOE_USER" ] || [ -n "$PPPOE_SECRET_FILE" ]; then
+            die "PPPoE settings require UPLINK_MODE=pppoe."
+            return 1
+        fi
     fi
 }
