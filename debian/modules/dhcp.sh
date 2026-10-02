@@ -43,3 +43,29 @@ dhcp_validate_ipv4_cidr() {
     [ "${#prefix}" -eq 1 ] || [ "${prefix#0}" = "$prefix" ] || return 1
     [ "$((10#$prefix))" -le 32 ]
 }
+
+dhcp_cidr_contains_ipv4() {
+    local cidr="$1" address="$2" base prefix base_n address_n mask
+    dhcp_validate_ipv4_cidr "$cidr" || return 1
+    dhcp_validate_ipv4 "$address" || return 1
+    base="${cidr%/*}"
+    prefix="${cidr##*/}"
+    base_n="$(dhcp_ipv4_to_int "$base")" || return 1
+    address_n="$(dhcp_ipv4_to_int "$address")" || return 1
+    if [ "$prefix" -eq 0 ]; then
+        mask=0
+    else
+        mask=$(( (0xFFFFFFFF << (32 - 10#$prefix)) & 0xFFFFFFFF ))
+    fi
+    [ $((base_n & mask)) -eq $((address_n & mask)) ]
+}
+
+dhcp_range_within_cidr() {
+    local cidr="$1" range="$2" first last
+    dhcp_validate_ipv4_cidr "$cidr" || return 1
+    dhcp_validate_range "$range" || return 1
+    first="${range%%-*}"
+    last="${range#*-}"
+    dhcp_cidr_contains_ipv4 "$cidr" "$first" &&
+        dhcp_cidr_contains_ipv4 "$cidr" "$last"
+}
