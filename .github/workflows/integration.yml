@@ -5,6 +5,9 @@ on:
   pull_request:
     paths:
       - 'debian/modules/transaction.sh'
+      - 'debian/modules/nftables.sh'
+      - 'debian/modules/forwarding.sh'
+      - 'debian/modules/dnsmasq.sh'
       - 'tests/integration/**'
       - '.github/workflows/integration.yml'
 
@@ -21,11 +24,11 @@ jobs:
       - name: Install integration prerequisites
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends git systemd systemd-sysv
+          apt-get install -y --no-install-recommends             git systemd systemd-sysv nftables dnsmasq procps
       - uses: actions/checkout@v4
       - name: Syntax check integration tests
         run: bash -n tests/integration/*.sh
       - name: Run Debian 13 integration tests
         run: |
-          printf 'NOTE: systemd PID 1 availability depends on the CI container runtime.\n'
+          printf 'NOTE: tests requiring unavailable kernel capabilities or systemd PID 1 must report SKIP, never PASS.\n'
           bash tests/integration.sh
