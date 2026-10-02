@@ -86,7 +86,8 @@ transaction_disarm() {
     # Do not kill an already-running rollback service here: it may have crossed
     # the guard before commit. Let it finish rather than interrupt recovery.
     systemctl reset-failed "${unit}.service" >/dev/null 2>&1 || true
-    [ -z "$wrapper" ] || rm -f "$wrapper" || true
+    # The wrapper may already be executing. Leave it on /run until the next
+    # boot rather than unlinking a recovery executable at the commit boundary.
 
     HOSTKIT_TRANSACTION_ARMED=0
     HOSTKIT_TRANSACTION_UNIT=
