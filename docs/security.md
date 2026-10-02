@@ -22,7 +22,7 @@ SECURITY may manage:
 - transactional protection and rollback
 - end-to-end verification of new remote access
 
-SECURITY does not configure routing, forwarding, NAT, DHCP, or router topology.
+SECURITY does not configure routing, forwarding, NAT, DHCP, or gateway topology.
 
 ## Existing State
 
@@ -103,15 +103,15 @@ It does not layer UFW, firewalld, or iptables compatibility management on top.
 
 ## Router Composition
 
-SECURITY and ROUTER are composable.
+SECURITY and GATEWAY are composable.
 
-SECURITY may be applied before or after ROUTER.
+SECURITY may be applied before or after GATEWAY.
 
-SECURITY must not destroy ROUTER-owned forwarding, NAT, or router-specific policy.
+SECURITY must not destroy GATEWAY-owned forwarding, NAT, or gateway-specific policy.
 
-ROUTER must not destroy SECURITY-owned host-management policy.
+GATEWAY must not destroy SECURITY-owned host-management policy.
 
-ROUTER does not require SECURITY to have been run.
+GATEWAY does not require SECURITY to have been run.
 
 ## Mutation Ordering
 
