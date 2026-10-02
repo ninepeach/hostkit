@@ -361,7 +361,7 @@ A rollback mechanism for remote critical changes must not depend on:
 
 A background `sleep` process in the current shell is not sufficient as the sole safety mechanism.
 
-The Debian 13 implementation should use a system-managed mechanism where appropriate.
+The Debian 13 implementation uses a systemd transient timer for confirmed transactions. Commit removes a runtime guard before cancelling the timer so a timer racing with commit cannot begin a new rollback after commit. If rollback has already crossed that guard, HostKit does not kill it mid-recovery; recovery is allowed to finish.
 
 ## Rollback Completeness
 
