@@ -15,3 +15,8 @@ test_ok "CIDR contains address" dhcp_cidr_contains_ipv4 192.168.10.1/24 192.168.
 test_not_ok "CIDR rejects other subnet" dhcp_cidr_contains_ipv4 192.168.10.1/24 192.168.11.1
 test_ok "DHCP range belongs to CIDR" dhcp_range_within_cidr 192.168.10.1/24 192.168.10.100-192.168.10.200
 test_not_ok "DHCP range outside CIDR rejected" dhcp_range_within_cidr 192.168.10.1/24 192.168.11.100-192.168.11.200
+
+test_not_ok "DHCP pool cannot include LAN gateway" dhcp_range_usable_for_lan 192.168.10.150/24 192.168.10.100-192.168.10.200
+test_not_ok "DHCP pool cannot start at network address" dhcp_range_usable_for_lan 192.168.10.1/24 192.168.10.0-192.168.10.100
+test_not_ok "DHCP pool cannot end at broadcast address" dhcp_range_usable_for_lan 192.168.10.1/24 192.168.10.200-192.168.10.255
+test_ok "ordinary DHCP pool is usable" dhcp_range_usable_for_lan 192.168.10.1/24 192.168.10.100-192.168.10.200
