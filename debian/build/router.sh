@@ -21,15 +21,13 @@ hostkit_main() {
         return 1
     }
 
-    local uplink
-    if ! uplink="$(network_detect_uplink)"; then
-        local rc=$?
-        case "$rc" in
-            2) die "Multiple IPv4 default-route uplinks detected; refusing to guess." ;;
-            *) die "No unambiguous IPv4 default-route uplink detected." ;;
-        esac
-        return 1
-    fi
+    local uplink rc=0
+    uplink="$(network_detect_uplink)" || rc=$?
+    case "$rc" in
+        0) ;;
+        2) die "Multiple IPv4 default-route uplinks detected; refusing to guess."; return 1 ;;
+        *) die "No unambiguous IPv4 default-route uplink detected."; return 1 ;;
+    esac
 
     forwarding_write_persistent 1 0
     forwarding_set_ipv4 1
