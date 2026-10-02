@@ -13,7 +13,7 @@ MODULES=(
 hostkit_main() {
     require_root
     require_debian_13
-    require_command apt-get dpkg-query grep getent ip systemctl chronyc df awk mktemp install cmp apt-config
+    require_command apt-get dpkg-query grep getent ip systemctl df awk mktemp install cmp apt-config
 
     log_info "HostKit INIT: Debian 13 base-host initialization."
 
@@ -43,18 +43,19 @@ hostkit_main() {
         log_ok "Required packages are already installed."
     fi
 
+    require_command chronyc
+
     chrony_ensure_running
     unattended_upgrades_enable
 
     local ntp_status="SYNCED"
-    if chrony_validate; then
-        log_ok "Time synchronization is available."
-    else
-        case "$?" in
-            2) ntp_status="PENDING" ;;
-            *) return 1 ;;
-        esac
-    fi
+    local chrony_rc=0
+    chrony_validate || chrony_rc=$?
+    case "$chrony_rc" in
+        0) log_ok "Time synchronization is available." ;;
+        2) ntp_status="PENDING" ;;
+        *) return 1 ;;
+    esac
 
     if ! unattended_upgrades_validate; then
         die "Unattended security updates could not be validated."
