@@ -77,12 +77,9 @@ transaction_disarm() {
     }
 
     if ! systemctl stop "${unit}.timer" >/dev/null 2>&1; then
-        # A missing timer after the guard is removed means it already fired or
-        # was collected. The guard still prevents a not-yet-started rollback.
-        if systemctl status "${unit}.timer" >/dev/null 2>&1; then
-            die "Failed to disarm rollback timer: ${unit}.timer"
-            return 1
-        fi
+        # Once the guard is removed, a timer that already fired or disappeared
+        # cannot start a new rollback. Treat the timer stop as best effort.
+        log_warn "Rollback timer was already inactive or could not be stopped: ${unit}.timer"
     fi
     # Do not kill an already-running rollback service here: it may have crossed
     # the guard before commit. Let it finish rather than interrupt recovery.
