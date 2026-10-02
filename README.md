@@ -76,7 +76,7 @@ Its initial scope includes:
 
 ROUTER is not a general-purpose routing suite. Multi-WAN, dynamic routing, SD-WAN, VPN orchestration, and generic network management are outside v0.1.
 
-The currently implemented no-configuration path preserves current network ownership, detects an unambiguous IPv4 uplink, and enables IPv4 forwarding. NAT44/firewall renderers and isolated datapath integration tests exist, but persistent live firewall ownership is intentionally not enabled in the product entry point until Debian 13 end-to-end validation is complete.
+The currently implemented no-configuration path preserves current network ownership, detects an unambiguous IPv4 uplink, enables IPv4 forwarding, and preserves the host's existing IPv6-forwarding state. NAT44/firewall renderers and isolated datapath integration tests exist, but persistent live firewall ownership is intentionally not enabled in the product entry point until Debian 13 end-to-end validation is complete.
 
 A configuration file is used only when HostKit should take ownership of additional network state such as WAN DHCP/PPPoE, LAN addressing, or LAN DHCP/DNS.
 
