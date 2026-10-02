@@ -80,4 +80,12 @@ EOF
 router_config_parse "$tmp"
 test_not_ok "DHCP range outside LAN subnet rejected" router_config_validate
 
+cat >"$tmp" <<'EOF'
+LAN=eth1
+LAN_ADDRESS=192.168.10.150/24
+DHCP_RANGE=192.168.10.100-192.168.10.200
+EOF
+router_config_parse "$tmp"
+test_not_ok "DHCP range containing gateway rejected" router_config_validate
+
 rm -f "$tmp" "$secret"
