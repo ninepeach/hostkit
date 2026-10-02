@@ -4,6 +4,7 @@ MODULES=(
     core
     apt
     packages
+    limits
     network-tools
     chrony
     unattended-upgrades
@@ -49,6 +50,13 @@ hostkit_main() {
 
     require_command chronyc
 
+    limits_configure_nofile 65535
+    if ! limits_validate_nofile 65535; then
+        die "Login-session nofile baseline could not be validated."
+        return 1
+    fi
+    log_ok "Login-session nofile baseline is 65535."
+
     chrony_ensure_running
     unattended_upgrades_enable
 
@@ -75,6 +83,7 @@ hostkit_main() {
     printf '%-14s %s\n' "Network" "OK"
     printf '%-14s %s\n' "DNS" "OK"
     printf '%-14s %s\n' "NTP" "$ntp_status"
+    printf '%-14s %s\n' "nofile" "65535"
     printf '%-14s %s\n' "Auto Updates" "ENABLED"
     printf '%-14s %s\n' "Failed Units" "$failed_units"
     printf '%-14s %s\n' "Disk" "OK"
