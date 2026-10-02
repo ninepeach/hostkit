@@ -54,11 +54,23 @@ nft --file "$rules"
 ip netns exec "$lan_ns" ping -c 1 -W 2 198.51.100.2 >/dev/null
 printf 'OK\n'
 
-printf 'integration: NAT hides LAN source from WAN peer... '
-ip netns exec "$wan_ns" ip neigh flush dev "$wan_peer" >/dev/null 2>&1 || true
+printf 'integration: WAN peer observes masqueraded source... '
+command -v tcpdump >/dev/null || { printf 'SKIP tcpdump unavailable\n'; exit 0; }
+capture="$(mktemp)"
+trap 'rm -f "$rules" "$capture"; cleanup' EXIT
+ip netns exec "$wan_ns" timeout 5 tcpdump -nn -l -i "$wan_peer" -c 1 'icmp[icmptype] = icmp-echo' >"$capture" 2>/dev/null &
+capture_pid=$!
+sleep 1
 ip netns exec "$lan_ns" ping -c 1 -W 2 198.51.100.2 >/dev/null
-if ip netns exec "$wan_ns" ip neigh show | grep -Fq '192.168.250.2'; then
+wait "$capture_pid"
+grep -Fq '198.51.100.1 > 198.51.100.2' "$capture" || {
     printf 'FAIL\n'
+    cat "$capture"
+    exit 1
+}
+if grep -Fq '192.168.250.2 > 198.51.100.2' "$capture"; then
+    printf 'FAIL\n'
+    cat "$capture"
     exit 1
 fi
 printf 'OK\n'
