@@ -481,6 +481,26 @@ Expected failures that are part of normal control flow must be handled explicitl
 
 Cleanup and rollback paths must not be accidentally aborted by strict-shell behavior.
 
+## No Speculative Tuning
+
+HostKit does not change kernel, TCP, memory, scheduler, or resource-limit settings merely because a value is commonly described as a server optimization.
+
+A tuning change requires at least one of:
+
+- a functional requirement of the selected product
+- a demonstrated workload requirement
+- a measured bottleneck that the setting is intended to address
+
+Modern Debian and Linux defaults, including adaptive TCP behavior, should be preserved when they already provide a sound general-purpose baseline.
+
+Examples:
+
+- ROUTER may enable IP forwarding because forwarding is required for the product to function.
+- A high-connection service may set its own `LimitNOFILE=` when its workload requires it.
+- INIT must not install a generic collection of TCP/sysctl tweaks copied from optimization templates.
+
+Do not create a generic performance-tuning framework or a large catch-all sysctl file. Product-required settings should remain owned by the product that needs them.
+
 ## Reboots
 
 HostKit does not automatically reboot a host unless a future product explicitly documents that behavior and requires explicit operator intent.
