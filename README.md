@@ -16,10 +16,10 @@ The planned standalone scripts are:
 ```text
 debian13-init.sh
 debian13-security.sh
-debian13-router.sh
+debian13-gateway.sh
 ```
 
-Once published, each script can be downloaded and run independently on a Debian 13 host.
+Each product is a standalone entry point. On a fresh Debian 13 host, running INIT first is the recommended baseline, but it is not a hard dependency for SECURITY or GATEWAY.
 
 ## What to Run
 
@@ -33,7 +33,7 @@ Use INIT on a fresh Debian 13 installation.
 
 It prepares the base operating system, including packages, diagnostics, time synchronization, logging, and security updates.
 
-INIT does not change SSH, users, firewall, or routing.
+INIT does not change SSH, users, firewall, forwarding, or gateway policy.
 
 ### Secure a host
 
@@ -53,46 +53,49 @@ It manages:
 
 SECURITY protects access-critical changes with rollback so a bad SSH or firewall configuration does not permanently lock you out.
 
-### Configure a router
+### Configure a gateway
 
 ```text
-debian13-router.sh
+debian13-gateway.sh
 ```
 
-Use ROUTER when the Debian host should operate as a network router or gateway.
+Use GATEWAY when the Debian host should provide an upstream/downstream network gateway role.
 
-It manages:
+Initial capabilities include:
 
-- network interfaces
-- forwarding
-- routing
-- router firewall
-- NAT
-- DHCP/DNS where configured
+- uplink configuration using DHCP, static addressing, or PPPoE
+- LAN addressing
+- IP forwarding
+- NAT/masquerade
+- local DNS service
+- optional DHCP server
+- gateway firewall policy
 
-ROUTER can be used whether or not SECURITY has already been applied.
+GATEWAY is intentionally smaller than a general-purpose router. It is not a dynamic-routing suite or generic network-management system.
+
+By default, the gateway role enables forwarding, NAT, and local DNS. DHCP server service is enabled only when a DHCP range is explicitly configured. Local DNS can be explicitly disabled.
 
 ## Typical Usage
 
-Standard server:
+Recommended fresh server workflow:
 
 ```text
 INIT -> SECURITY
 ```
 
-Router without separate SECURITY setup:
+Recommended fresh gateway workflow:
 
 ```text
-INIT -> ROUTER
+INIT -> GATEWAY
 ```
 
-Secured host that later becomes a router:
+Secured gateway:
 
 ```text
-INIT -> SECURITY -> ROUTER
+INIT -> SECURITY -> GATEWAY
 ```
 
-Products are designed to compose without requiring every product to be installed.
+These are recommended workflows, not dependency chains. SECURITY and GATEWAY can also be run directly on an already-maintained Debian 13 host. Each product checks and establishes only the prerequisites required for its own contract rather than invoking another complete HostKit product.
 
 ## Safety
 
@@ -119,7 +122,7 @@ tools/
 dist/
 ├── debian13-init.sh
 ├── debian13-security.sh
-└── debian13-router.sh
+└── debian13-gateway.sh
 ```
 
 Build instructions will be added when the first distribution script is implemented.
@@ -130,7 +133,7 @@ Build instructions will be added when the first distribution script is implement
 - [Conventions](docs/conventions.md) — CLI, exit status, logging, dry-run, idempotency, transactions, rollback, and generated-artifact rules
 - [INIT](docs/init.md) — base-host initialization behavior and boundaries
 - [SECURITY](docs/security.md) — administrative access, SSH, firewall, mutation ordering, transactions, and rollback
-- [ROUTER](docs/router.md) — networking, forwarding, NAT, DHCP/DNS, composition, and router safety
+- [GATEWAY](docs/gateway.md) — uplink, LAN, forwarding, NAT, DNS, optional DHCP, and gateway safety
 
 ## License
 
