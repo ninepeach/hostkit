@@ -49,7 +49,7 @@ mock_end
 transaction_begin router
 mock_begin
 mock_command systemd-run 'exit 0'
-mock_command systemctl 'case "$*" in "stop "*.timer) exit 1 ;; *) exit 0 ;; esac'
+mock_command systemctl 'case "$*" in "stop "*.timer) exit 1 ;; "status "*.timer) exit 0 ;; *) exit 0 ;; esac'
 transaction_arm "$rollback" 180
 test_not_ok "timer stop failure makes commit fail" transaction_commit
 test_eq "failed disarm remains armed" "1" "$HOSTKIT_TRANSACTION_ARMED"
