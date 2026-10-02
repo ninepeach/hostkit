@@ -55,6 +55,15 @@ test_not_ok "timer stop failure makes commit fail" transaction_commit
 test_eq "failed disarm remains armed" "1" "$HOSTKIT_TRANSACTION_ARMED"
 mock_end
 
+transaction_begin collected
+mock_begin
+mock_command systemd-run 'exit 0'
+mock_command systemctl 'case "$*" in "stop "*.timer) exit 1 ;; "status "*.timer) exit 1 ;; *) exit 0 ;; esac'
+transaction_arm "$rollback" 180
+test_ok "already-collected timer does not make commit fail" transaction_commit
+test_eq "collected timer commit clears armed state" "0" "$HOSTKIT_TRANSACTION_ARMED"
+mock_end
+
 test_not_ok "rollback requires armed transaction after fresh begin" bash -c '
     source "'"$ROOT_DIR"'/debian/modules/core.sh"
     source "'"$ROOT_DIR"'/debian/modules/transaction.sh"
