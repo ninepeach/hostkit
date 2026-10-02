@@ -29,7 +29,11 @@ hostkit_main() {
         *) die "No unambiguous IPv4 default-route uplink detected."; return 1 ;;
     esac
 
-    forwarding_write_persistent 1 0
+    # Persist only the IPv4 setting ROUTER currently owns. Do not disable an
+    # already-enabled IPv6 forwarding path while IPv6 ownership remains unreleased.
+    local ipv6=0
+    forwarding_ipv6_enabled && ipv6=1
+    forwarding_write_persistent 1 "$ipv6"
     forwarding_set_ipv4 1
     forwarding_ipv4_enabled || { die "IPv4 forwarding could not be enabled."; return 1; }
 
