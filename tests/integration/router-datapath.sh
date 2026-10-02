@@ -6,6 +6,7 @@ source "$ROOT_DIR/tests/integration/lib/netns.sh"
 source "$ROOT_DIR/debian/modules/core.sh"
 source "$ROOT_DIR/debian/modules/network.sh"
 source "$ROOT_DIR/debian/modules/nat.sh"
+source "$ROOT_DIR/debian/modules/router-firewall.sh"
 
 [ "${EUID:-$(id -u)}" -eq 0 ] || { printf 'SKIP router datapath integration requires root\n'; exit 0; }
 command -v nft >/dev/null || { printf 'SKIP nft unavailable\n'; exit 0; }
@@ -44,7 +45,7 @@ ip -n "$wan_ns" addr add 198.51.100.2/24 dev "$wan_peer"
 sysctl -w net.ipv4.ip_forward=1 >/dev/null
 
 rules="$(mktemp)"
-nat_render_router_ruleset "$lan_host" "$wan_host" "$table" "${table}_nat" >"$rules"
+router_firewall_render "$lan_host" "$wan_host" "$table" "${table}_nat" >"$rules"
 trap 'rm -f "$rules"; cleanup' EXIT
 
 printf 'integration: isolated router forwarding and NAT44... '
