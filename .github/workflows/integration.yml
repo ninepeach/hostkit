@@ -8,6 +8,7 @@ on:
       - 'debian/modules/nftables.sh'
       - 'debian/modules/forwarding.sh'
       - 'debian/modules/dnsmasq.sh'
+      - 'debian/modules/networkd.sh'
       - 'tests/integration/**'
       - '.github/workflows/integration.yml'
 
@@ -24,7 +25,7 @@ jobs:
       - name: Install integration prerequisites
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends             git systemd systemd-sysv nftables dnsmasq procps
+          apt-get install -y --no-install-recommends             git systemd systemd-sysv nftables dnsmasq procps iproute2 iputils-ping
       - uses: actions/checkout@v4
       - name: Syntax check integration tests
         run: bash -n tests/integration/*.sh
