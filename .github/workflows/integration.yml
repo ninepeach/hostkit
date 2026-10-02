@@ -9,6 +9,8 @@ on:
       - 'debian/modules/forwarding.sh'
       - 'debian/modules/dnsmasq.sh'
       - 'debian/modules/networkd.sh'
+      - 'debian/modules/nat.sh'
+      - 'debian/modules/network.sh'
       - 'tests/integration/**'
       - '.github/workflows/integration.yml'
 
