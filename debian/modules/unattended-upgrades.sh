@@ -1,7 +1,7 @@
 # Unattended security-update mechanisms.
 
 unattended_upgrades_enable() {
-    local path="/etc/apt/apt.conf.d/52hostkit-unattended-upgrades"
+    local path="${HOSTKIT_UNATTENDED_PATH:-/etc/apt/apt.conf.d/52hostkit-unattended-upgrades}"
     local tmp
     tmp="$(mktemp)"
 
@@ -11,6 +11,16 @@ APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 Unattended-Upgrade::Automatic-Reboot "false";
 EOF
+
+    if [ -e "$path" ]; then
+        local first=
+        IFS= read -r first <"$path" || true
+        if [ "$first" != "# Managed by HostKit. Do not edit manually." ]; then
+            rm -f "$tmp"
+            die "Refusing to overwrite unattended-upgrades file not owned by HostKit: $path"
+            return 1
+        fi
+    fi
 
     if [ -f "$path" ] && cmp -s "$tmp" "$path"; then
         rm -f "$tmp"
@@ -25,7 +35,8 @@ EOF
 }
 
 unattended_upgrades_validate() {
-    test -r /etc/apt/apt.conf.d/52hostkit-unattended-upgrades &&
+    local path="${HOSTKIT_UNATTENDED_PATH:-/etc/apt/apt.conf.d/52hostkit-unattended-upgrades}"
+    test -r "$path" &&
         apt-config dump 2>/dev/null | grep -q 'APT::Periodic::Unattended-Upgrade "1";' &&
         apt-config dump 2>/dev/null | grep -q 'Unattended-Upgrade::Automatic-Reboot "false";'
 }
