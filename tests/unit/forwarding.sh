@@ -17,3 +17,15 @@ mock_command sysctl 'exit 1'
 test_not_ok "sysctl failure propagated for IPv4" forwarding_set_ipv4 1
 test_not_ok "sysctl failure propagated for IPv6" forwarding_set_ipv6 1
 mock_end
+
+tmpdir="$(mktemp -d)"
+export HOSTKIT_SYSCTL_PATH="$tmpdir/router.conf"
+test_ok "persistent forwarding written" forwarding_write_persistent 1 1
+test_ok "persistent IPv4 value" grep -Fqx 'net.ipv4.ip_forward=1' "$HOSTKIT_SYSCTL_PATH"
+test_ok "persistent IPv6 value" grep -Fqx 'net.ipv6.conf.all.forwarding=1' "$HOSTKIT_SYSCTL_PATH"
+test_ok "persistent forwarding idempotent" forwarding_write_persistent 1 1
+printf '%s\n' '# admin owned' >"$HOSTKIT_SYSCTL_PATH"
+test_not_ok "foreign sysctl file is preserved" forwarding_write_persistent 1 1
+test_eq "foreign sysctl content unchanged" "# admin owned" "$(cat "$HOSTKIT_SYSCTL_PATH")"
+unset HOSTKIT_SYSCTL_PATH
+rm -rf "$tmpdir"
