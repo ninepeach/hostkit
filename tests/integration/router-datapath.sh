@@ -44,21 +44,7 @@ ip -n "$wan_ns" addr add 198.51.100.2/24 dev "$wan_peer"
 sysctl -w net.ipv4.ip_forward=1 >/dev/null
 
 rules="$(mktemp)"
-cat >"$rules" <<EOF
-table inet $table {
-    chain forward {
-        type filter hook forward priority 0; policy drop;
-        iifname "$lan_host" oifname "$wan_host" accept
-        iifname "$wan_host" oifname "$lan_host" ct state established,related accept
-    }
-}
-table ip ${table}_nat {
-    chain postrouting {
-        type nat hook postrouting priority srcnat; policy accept;
-        oifname "$wan_host" masquerade
-    }
-}
-EOF
+nat_render_router_ruleset "$lan_host" "$wan_host" "$table" "${table}_nat" >"$rules"
 trap 'rm -f "$rules"; cleanup' EXIT
 
 printf 'integration: isolated router forwarding and NAT44... '
