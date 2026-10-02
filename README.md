@@ -11,13 +11,14 @@ HostKit provides standalone scripts for initializing, securing, and configuring 
 
 > HostKit is under active development. Distribution scripts are not published yet.
 
-The standalone build targets currently are:
+The implemented standalone build targets currently are:
 
 ```text
 debian13-init.sh
-debian13-security.sh
 debian13-router.sh
 ```
+
+`debian13-security.sh` is a planned v0.1 artifact. SECURITY mechanisms exist, but the final transactional entry point is intentionally not released yet.
 
 Each product is a standalone entry point. On a fresh Debian 13 host, running INIT first is the recommended baseline, but it is not a hard dependency for SECURITY or ROUTER.
 
@@ -125,8 +126,10 @@ tools/
 
 dist/
 ├── debian13-init.sh
-├── debian13-security.sh
 └── debian13-router.sh
+
+# planned after SECURITY transaction verification:
+# debian13-security.sh
 ```
 
 INIT can now be built from the repository root with:
