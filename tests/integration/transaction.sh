@@ -47,7 +47,11 @@ rm -f "$marker"
 printf 'integration: commit cancels rollback... '
 transaction_begin integration-commit
 transaction_arm "$rollback" 30
+guard="$HOSTKIT_TRANSACTION_GUARD"
+wrapper="$HOSTKIT_TRANSACTION_WRAPPER"
 transaction_commit
+[ ! -e "$guard" ] || { printf 'FAIL guard remains after commit\n'; exit 1; }
+[ ! -e "$wrapper" ] || { printf 'FAIL wrapper remains after commit\n'; exit 1; }
 sleep 32
 [ ! -e "$marker" ] || { printf 'FAIL\n'; exit 1; }
 printf 'OK\n'
