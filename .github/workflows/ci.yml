@@ -19,5 +19,5 @@ jobs:
           while IFS= read -r -d '' file; do
             bash -n "$file"
           done < <(find debian tools tests -type f -name '*.sh' -print0)
-      - name: Run smoke tests
+      - name: Run unit and build tests
         run: bash tests/run.sh
