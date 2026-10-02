@@ -30,6 +30,7 @@ mock_command systemd-run 'exit 0'
 mock_command systemctl 'exit 0'
 test_ok "arm transaction" transaction_arm "$rollback" 180
 test_eq "armed state recorded" "1" "$HOSTKIT_TRANSACTION_ARMED"
+case "$HOSTKIT_TRANSACTION_UNIT" in hostkit-rollback-security-[0-9]*) test_pass "transaction unit has PID suffix" ;; *) test_fail "transaction unit has PID suffix" ;; esac
 test_ok "rollback guard exists while armed" test -e "$HOSTKIT_TRANSACTION_GUARD"
 test_ok "rollback wrapper exists while armed" test -x "$HOSTKIT_TRANSACTION_WRAPPER"
 guard="$HOSTKIT_TRANSACTION_GUARD"
