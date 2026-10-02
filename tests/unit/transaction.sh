@@ -30,9 +30,12 @@ mock_command systemd-run 'exit 0'
 mock_command systemctl 'exit 0'
 test_ok "arm transaction" transaction_arm "$rollback" 180
 test_eq "armed state recorded" "1" "$HOSTKIT_TRANSACTION_ARMED"
+test_ok "rollback guard exists while armed" test -e "$HOSTKIT_TRANSACTION_GUARD"
+guard="$HOSTKIT_TRANSACTION_GUARD"
 test_not_ok "double arm rejected" transaction_arm "$rollback" 180
 test_ok "commit disarms transaction" transaction_commit
 test_eq "commit clears armed state" "0" "$HOSTKIT_TRANSACTION_ARMED"
+test_not_ok "commit removes rollback guard" test -e "$guard"
 mock_end
 
 transaction_begin router
