@@ -87,6 +87,65 @@ Dry-run must not:
 
 If a meaningful dry-run cannot be implemented for an operation, HostKit should report that limitation rather than simulate false certainty.
 
+## Module Contract
+
+Files under `debian/modules/` provide mechanisms, not product policy.
+
+Every module must follow these rules:
+
+- sourcing a module has zero host side effects
+- sourcing a module must not enable strict shell mode or install global traps
+- modules expose explicitly named functions; product build definitions decide when and why to call them
+- functions are idempotent where practical and must not blindly append configuration
+- modules prefer HostKit-owned files or native drop-ins over rewriting vendor or administrator-owned files
+- failures that affect correctness, safety, or the requested final state must not be silently ignored
+- module output uses the common logging functions provided by `core.sh`
+- variables, paths, and expansions must be quoted correctly; shell input must be validated before use
+
+Strict shell behavior such as `set -Eeuo pipefail` belongs to the generated product entry point, not to a sourced module.
+
+Global trap ownership likewise belongs to the product/transaction lifecycle. A shared module may provide cleanup registration mechanisms, but sourcing it must not replace the caller's traps.
+
+Module functions use a module prefix because all functions ultimately share one namespace in a standalone generated script:
+
+```text
+apt_update
+apt_install
+
+ssh_validate
+ssh_reload
+ssh_effective_port
+
+nft_validate
+nft_apply
+
+network_detect_uplink
+network_validate
+
+transaction_begin
+transaction_arm
+transaction_commit
+transaction_rollback
+```
+
+Prefer `<module>_<verb>` unless a clearer module-specific name is required.
+
+Dependency direction remains simple:
+
+```text
+Build Definition
+       |
+       v
+     Module
+       |
+       v
+small shared/core mechanism
+```
+
+A module must never call a HostKit product or depend on product orchestration.
+
+`core.sh` must remain deliberately small. Its initial responsibilities are limited to common logging, fatal/error helpers, basic platform preflight functions, and small temporary-resource cleanup mechanisms. Transaction handling is a separate module and must not grow inside `core.sh`.
+
 ## Idempotency
 
 HostKit products are convergent.
@@ -104,6 +163,65 @@ A repeated run must not unnecessarily:
 - rewrite files solely to change formatting
 
 Idempotency does not mean every command must be skipped. It means the resulting state is stable and repeated execution is safe.
+
+## State Classification
+
+Inspection classifies relevant existing state using four terms:
+
+- **MATCH** — effective state already satisfies the requested state and HostKit can leave it unchanged.
+- **ADOPTABLE** — state is not necessarily HostKit-owned, but already satisfies the requested behavior and does not need to be rewritten merely to expand HostKit ownership.
+- **CONFLICT** — observed state clearly conflicts with the requested state and requires an explicit planned change.
+- **UNKNOWN** — HostKit cannot determine the state safely enough to perform the requested mutation.
+
+HostKit's goal is to establish the requested state, not to maximize ownership of configuration.
+
+UNKNOWN or ambiguous state must not be converted into a destructive guess. The product must either leave it alone, request explicit migration intent where such an interface exists, or fail safely.
+
+## Execution Model
+
+HostKit uses a small operational model rather than an execution framework:
+
+```text
+INSPECT
+   |
+CLASSIFY
+   |
+PLAN
+   |
+STAGE
+   |
+STATIC VALIDATE
+   |
+APPLY
+   |
+RUNTIME VERIFY
+   |
+COMMIT
+```
+
+PLAN is a phase and an operator-visible description of intended material changes. It is not a resource graph, provider model, dependency engine, or separate plan language.
+
+For a dangerous change, APPLY is protected by a confirmed transaction:
+
+```text
+STAGE
+  |
+STATIC VALIDATE
+  |
+ARM ROLLBACK
+  |
+APPLY
+  |
+RUNTIME / EXTERNAL VERIFY
+  |                  |
+success            failure/timeout
+  |                  |
+COMMIT            ROLLBACK
+  |
+DISARM ROLLBACK
+```
+
+Not every operation requires a transaction. Ordinary safe operations such as installing a required package do not become transactional merely for architectural symmetry. Confirmed transactions are reserved for changes whose failure can break management access, networking, firewall behavior, or another explicitly critical invariant.
 
 ## Inspect Before Mutate
 
@@ -141,6 +259,23 @@ HostKit owns only the state required by the selected product.
 It must avoid rewriting unrelated configuration merely to normalize formatting or impose stylistic preferences.
 
 Where a native drop-in mechanism exists and is sufficient, prefer it over wholesale replacement.
+
+## Effective State Verification
+
+Whenever a reliable runtime or effective-configuration interface exists, HostKit verifies effective system state rather than treating configuration text as proof of success.
+
+Examples include:
+
+- OpenSSH effective configuration through the server's own configuration interface
+- sudoers validation through `visudo`
+- active nftables ruleset rather than only the source file
+- kernel forwarding values rather than only sysctl configuration text
+- live addresses and routes rather than only network configuration files
+- service runtime state rather than only enablement files
+- DHCP/DNS bindings and behavior rather than only daemon configuration
+- chrony runtime state rather than only chrony configuration
+
+A written file proves that a file was written. It does not by itself prove that the requested system behavior is active.
 
 ## Static Validation
 
@@ -340,7 +475,7 @@ Generated files should not be edited manually.
 
 HostKit shell code should favor explicit failure handling.
 
-`set -Eeuo pipefail` may be used as a baseline, but it is not a substitute for deliberate validation and error handling.
+`set -Eeuo pipefail` may be used by the generated product entry point as a baseline, but sourced modules must not enable it themselves. Strict mode is not a substitute for deliberate validation and error handling.
 
 Expected failures that are part of normal control flow must be handled explicitly.
 
