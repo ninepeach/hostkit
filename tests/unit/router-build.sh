@@ -1,2 +1,2 @@
-# Build-definition behavior is covered by tests/build.sh.
-test_ok "router build placeholder" true
+# ROUTER build-definition presence smoke test.
+test_ok "ROUTER build definition exists" test -r "$ROOT_DIR/debian/build/router.sh"
