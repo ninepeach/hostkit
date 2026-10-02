@@ -11,7 +11,7 @@ HostKit provides standalone scripts for initializing, securing, and configuring 
 
 > HostKit is under active development. Distribution scripts are not published yet.
 
-The planned standalone scripts are:
+The standalone build targets currently are:
 
 ```text
 debian13-init.sh
@@ -59,7 +59,7 @@ SECURITY protects access-critical changes with rollback so a bad SSH or firewall
 debian13-router.sh
 ```
 
-ROUTER turns a Debian 13 physical machine into a simple home Internet router.
+ROUTER is being built to turn a Debian 13 physical machine into a simple home Internet router.
 
 Its initial scope includes:
 
@@ -75,7 +75,7 @@ Its initial scope includes:
 
 ROUTER is not a general-purpose routing suite. Multi-WAN, dynamic routing, SD-WAN, VPN orchestration, and generic network management are outside v0.1.
 
-Without a configuration file, ROUTER preserves current IP addresses, routes, DNS, and DHCP services, detects the active Internet uplink from the current default route, enables IPv4 forwarding, and enables NAT44 masquerade on that uplink. It refuses to guess when the active uplink cannot be determined safely.
+The currently implemented no-configuration path preserves current network ownership, detects an unambiguous IPv4 uplink, and enables IPv4 forwarding. NAT44/firewall renderers and isolated datapath integration tests exist, but persistent live firewall ownership is intentionally not enabled in the product entry point until Debian 13 end-to-end validation is complete.
 
 A configuration file is used only when HostKit should take ownership of additional network state such as WAN DHCP/PPPoE, LAN addressing, or LAN DHCP/DNS.
 
@@ -141,7 +141,7 @@ The generated artifact is:
 dist/debian13-init.sh
 ```
 
-SECURITY and ROUTER build definitions are not implemented yet.
+INIT and ROUTER build definitions are implemented. ROUTER currently exposes only the conservative preserve-existing-uplink preparation path; active LAN/DHCP/PPPoE/firewall ownership remains blocked on Debian 13 end-to-end validation. SECURITY mechanisms are under implementation and its final transactional product entry point is not yet released.
 
 ## Documentation
 
