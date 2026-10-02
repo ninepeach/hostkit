@@ -126,7 +126,10 @@ Build instructions will be added when the first distribution script is implement
 
 ## Documentation
 
-See [docs/design.md](docs/design.md) for architecture, product boundaries, transaction semantics, rollback behavior, firewall composition, and development principles.
+- [Design](docs/design.md) — architecture, composition, safety invariants, and development principles
+- [INIT](docs/init.md) — base-host initialization behavior and boundaries
+- [SECURITY](docs/security.md) — administrative access, SSH, firewall, transactions, and rollback
+- [ROUTER](docs/router.md) — networking, forwarding, NAT, DHCP/DNS, composition, and router safety
 
 ## License
 
