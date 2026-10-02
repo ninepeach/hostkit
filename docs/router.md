@@ -1,5 +1,7 @@
 # ROUTER
 
+> **Implementation status:** The v0.1 architecture below is the target contract. The current product entry point intentionally enables only the preserve-existing-uplink IPv4-forwarding path. NAT44/firewall renderers and isolated datapath tests exist, but persistent firewall ownership, LAN configuration, DHCP, PPPoE, and IPv6-PD are not released until they pass Debian 13 end-to-end validation.
+
 ROUTER turns a Debian 13 physical machine into a simple home Internet router.
 
 It is intentionally a home-router product, not a general-purpose Linux routing suite. ROUTER does not aim to provide BGP, OSPF, VRFs, SD-WAN, generic policy routing, VPN orchestration, or cloud-gateway management.
