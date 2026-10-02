@@ -19,7 +19,6 @@ cat >"$tmp" <<'EOF'
 UNKNOWN=value
 EOF
 test_not_ok "unknown key rejected" router_config_parse "$tmp"
-rm -f "$tmp"
 
 cat >"$tmp" <<'EOF'
 UPLINK=eth0
@@ -34,3 +33,5 @@ LAN=eth0
 EOF
 router_config_parse "$tmp"
 test_not_ok "same WAN and LAN rejected" router_config_validate
+
+rm -f "$tmp"
