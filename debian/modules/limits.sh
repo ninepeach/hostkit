@@ -2,7 +2,7 @@
 
 limits_configure_nofile() {
     local value="${1:-65535}"
-    local path="/etc/security/limits.d/90-hostkit.conf"
+    local path="${HOSTKIT_LIMITS_PATH:-/etc/security/limits.d/90-hostkit.conf}"
     local tmp
 
     case "$value" in
@@ -24,6 +24,16 @@ limits_configure_nofile() {
 * hard nofile $value
 EOF
 
+    if [ -e "$path" ]; then
+        local first=
+        IFS= read -r first <"$path" || true
+        if [ "$first" != "# Managed by HostKit. Do not edit manually." ]; then
+            rm -f "$tmp"
+            die "Refusing to overwrite limits file not owned by HostKit: $path"
+            return 1
+        fi
+    fi
+
     if [ -f "$path" ] && cmp -s "$tmp" "$path"; then
         rm -f "$tmp"
         return 0
@@ -38,7 +48,7 @@ EOF
 
 limits_validate_nofile() {
     local value="${1:-65535}"
-    local path="/etc/security/limits.d/90-hostkit.conf"
+    local path="${HOSTKIT_LIMITS_PATH:-/etc/security/limits.d/90-hostkit.conf}"
 
     [ -r "$path" ] || return 1
     grep -Fqx "* soft nofile $value" "$path" &&
