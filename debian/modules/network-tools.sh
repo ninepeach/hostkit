@@ -1,7 +1,8 @@
 # Network and DNS preflight mechanisms.
 
 network_default_route_available() {
-    ip route show default 2>/dev/null | grep -q '^default '
+    ip route show default 2>/dev/null | grep -q '^default ' ||
+        ip -6 route show default 2>/dev/null | grep -q '^default '
 }
 
 network_dns_available() {
@@ -10,7 +11,7 @@ network_dns_available() {
 
 network_require_connectivity() {
     if ! network_default_route_available; then
-        die "No IPv4 default route is available."
+        die "No default route is available."
         return 1
     fi
 
