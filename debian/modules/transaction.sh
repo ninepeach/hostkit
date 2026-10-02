@@ -41,6 +41,7 @@ transaction_arm() {
 #!/usr/bin/env bash
 set -eu
 [ -e "$guard" ] || exit 0
+rm -f "$guard" "$wrapper"
 exec "$rollback_script"
 EOF
     chmod 700 "$wrapper" || { rm -f "$wrapper"; return 1; }
