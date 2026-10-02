@@ -63,6 +63,8 @@ router_config_validate() {
     if [ -n "$DHCP_RANGE" ]; then
         [ -n "$LAN" ] && [ -n "$LAN_ADDRESS" ] || { die "DHCP_RANGE requires LAN and LAN_ADDRESS."; return 1; }
         dhcp_validate_range "$DHCP_RANGE" || { die "Invalid DHCP_RANGE: $DHCP_RANGE"; return 1; }
+        dhcp_range_within_cidr "$LAN_ADDRESS" "$DHCP_RANGE" ||
+            { die "DHCP_RANGE must be within LAN_ADDRESS subnet."; return 1; }
     fi
 
     if [ "$UPLINK_MODE" = "pppoe" ]; then
