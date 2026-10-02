@@ -27,7 +27,7 @@ The initial products are:
 
 - **INIT** — establish a clean, maintainable, diagnosable base host.
 - **SECURITY** — establish secure administrative access and host protection.
-- **GATEWAY** — configure the host as an upstream/downstream network gateway.
+- **ROUTER** — configure the host as an upstream/downstream network router.
 
 HostKit is not intended to become a general-purpose configuration-management framework.
 
@@ -94,7 +94,7 @@ The initial build definitions are:
 ```text
 init
 security
-gateway
+router
 ```
 
 A build definition is intentionally simple. HostKit should not invent a DSL to describe module composition.
@@ -115,24 +115,24 @@ Initial artifacts:
 ```text
 debian13-init.sh
 debian13-security.sh
-debian13-gateway.sh
+debian13-router.sh
 ```
 
 ## Product Model
 
 Every HostKit product is a standalone entry point.
 
-INIT is the recommended baseline for a fresh Debian 13 host, but it is not an installation prerequisite for SECURITY or GATEWAY.
+INIT is the recommended baseline for a fresh Debian 13 host, but it is not an installation prerequisite for SECURITY or ROUTER.
 
 Recommended workflows include:
 
 ```text
 Fresh Debian 13 -> INIT -> SECURITY
-Fresh Debian 13 -> INIT -> GATEWAY
-Fresh Debian 13 -> INIT -> SECURITY -> GATEWAY
+Fresh Debian 13 -> INIT -> ROUTER
+Fresh Debian 13 -> INIT -> SECURITY -> ROUTER
 ```
 
-An already-maintained Debian 13 host may run SECURITY or GATEWAY directly.
+An already-maintained Debian 13 host may run SECURITY or ROUTER directly.
 
 These arrows describe workflows, not a product dependency graph.
 
@@ -167,7 +167,7 @@ INIT does not configure:
 - authorized keys
 - firewall policy
 - forwarding policy
-- gateway topology
+- router topology
 - NAT
 - DHCP/DNS service
 - containers or Kubernetes
@@ -204,63 +204,52 @@ An allowed firewall port does not imply that sshd must listen on that port.
 
 HostKit prioritizes recoverability over cosmetic firewall minimalism.
 
-## GATEWAY
+## ROUTER
 
-GATEWAY configures a Debian 13 host as a network gateway. It is not a general-purpose router product.
+ROUTER turns a Debian 13 physical machine into a simple home Internet router. It is not a general-purpose routing suite.
 
-The initial gateway model has an upstream side and a downstream/LAN side.
+The v0.1 model has one Internet uplink and one LAN. It supports an already-working uplink, DHCP uplink, and PPPoE uplink. Static WAN ownership, Multi-WAN, dynamic routing, and generic network orchestration are outside the initial scope.
 
-Supported initial uplink modes are expected to include:
+Without a configuration file, ROUTER preserves current IP addresses, routes, DNS, and DHCP services, detects an unambiguous active Internet uplink, enables IPv4 forwarding, and enables NAT44 masquerade on that uplink.
 
-- DHCP client
-- static addressing
-- PPPoE
+A configuration file is optional and is used only when HostKit should actively own additional network state such as WAN DHCP/PPPoE, LAN addressing, or LAN DHCP/DNS.
 
-GATEWAY responsibilities include:
+ROUTER responsibilities include:
 
-- uplink configuration
-- LAN interface/address configuration
-- IP forwarding
-- gateway firewall policy
-- NAT/masquerade
-- local DNS service
-- optional DHCP server
-- gateway-specific runtime validation
+- current-uplink detection and preservation
+- optional DHCP or PPPoE uplink configuration
+- optional LAN interface/address configuration
+- IPv4 forwarding
+- NAT44 masquerade
+- router firewall policy
+- optional LAN DHCPv4 and local DNS through dnsmasq
+- native IPv6 forwarding when usable ISP IPv6 is available
+- DHCPv6 prefix delegation and LAN RA/SLAAC where supported and validated
+- router-specific runtime validation
 
-Default gateway policy:
+ROUTER never invents a DHCP pool, global IPv6 prefix, or NAT66 policy. IPv6 uses native routed prefixes when the ISP provides them.
 
-```text
-IP forwarding    enabled
-NAT              enabled
-Local DNS        enabled
-DHCP server      disabled unless an explicit DHCP range is configured
-```
+ROUTER can operate whether or not SECURITY has been applied.
 
-Local DNS may be explicitly disabled.
+When SECURITY exists, ROUTER must preserve its host-management policy.
 
-A DHCP range must not be guessed. When DHCP server service is requested, the address range must be explicitly provided.
+When SECURITY does not exist, ROUTER establishes only the minimum host protection required to operate safely and recoverably. It must not silently create administrative users, change sudo policy, change SSH policy, or replace authorized keys merely because SECURITY would manage those concerns.
 
-GATEWAY can operate whether or not SECURITY has been applied.
-
-When SECURITY exists, GATEWAY must preserve its host-management policy.
-
-When SECURITY does not exist, GATEWAY establishes only the minimum host protection required to operate safely and recoverably. It must not silently create administrative users, change sudo policy, change SSH policy, or replace authorized keys merely because SECURITY would manage those concerns.
-
-Applying SECURITY later must likewise preserve GATEWAY-owned policy.
+Applying SECURITY later must likewise preserve ROUTER-owned policy.
 
 ## Firewall Composition
 
-Host firewall policy and gateway policy are separate responsibilities even though both use nftables.
+Host firewall policy and router policy are separate responsibilities even though both use nftables.
 
 Conceptually:
 
 ```text
 Host policy
     Security-managed when SECURITY is present
-    Minimum safe baseline when GATEWAY operates alone
+    Minimum safe baseline when ROUTER operates alone
 
 Gateway policy
-    Gateway-managed forwarding, NAT, and gateway-specific rules
+    Gateway-managed forwarding, NAT, and router-specific rules
 ```
 
 The nftables module provides mechanisms such as backup, validation, application, and restoration. It does not own final firewall policy.
@@ -320,8 +309,8 @@ transaction
 security
     SSH/access verification
 
-gateway
-    gateway/connectivity verification
+router
+    router/connectivity verification
 ```
 
 This keeps transaction mechanics reusable without inventing a generic health framework.
@@ -395,7 +384,7 @@ HostKit must therefore:
 - protect critical changes with rollback
 - validate the resulting runtime state
 
-GATEWAY verification is product-specific and must not be forced into SECURITY's SSH verification model.
+ROUTER verification is product-specific and must not be forced into SECURITY's SSH verification model.
 
 ## Debian 13
 
