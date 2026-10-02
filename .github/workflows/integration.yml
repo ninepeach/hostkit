@@ -10,6 +10,7 @@ on:
       - 'debian/modules/dnsmasq.sh'
       - 'debian/modules/networkd.sh'
       - 'debian/modules/nat.sh'
+      - 'debian/modules/router-firewall.sh'
       - 'debian/modules/network.sh'
       - 'tests/integration/**'
       - '.github/workflows/integration.yml'
@@ -27,7 +28,7 @@ jobs:
       - name: Install integration prerequisites
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends             git systemd systemd-sysv nftables dnsmasq procps iproute2 iputils-ping
+          apt-get install -y --no-install-recommends             git systemd systemd-sysv nftables dnsmasq procps iproute2 iputils-ping tcpdump
       - uses: actions/checkout@v4
       - name: Syntax check integration tests
         run: bash -n tests/integration/*.sh
