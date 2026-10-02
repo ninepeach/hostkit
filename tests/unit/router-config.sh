@@ -20,3 +20,17 @@ UNKNOWN=value
 EOF
 test_not_ok "unknown key rejected" router_config_parse "$tmp"
 rm -f "$tmp"
+
+cat >"$tmp" <<'EOF'
+UPLINK=eth0
+UPLINK=eth1
+EOF
+test_not_ok "duplicate key rejected" router_config_parse "$tmp"
+
+cat >"$tmp" <<'EOF'
+UPLINK=eth0
+UPLINK_MODE=dhcp
+LAN=eth0
+EOF
+router_config_parse "$tmp"
+test_not_ok "same WAN and LAN rejected" router_config_validate
