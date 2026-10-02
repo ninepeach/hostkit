@@ -14,7 +14,7 @@ grep -q '^# Platform: Debian 13$' "$artifact"
 grep -q '^set -Eeuo pipefail$' "$artifact"
 grep -q '^hostkit_main "\$@"$' "$artifact"
 
-for module in core apt packages limits network-tools chrony unattended-upgrades system-health; do
+for module in core apt packages limits locale hostname timezone network-tools chrony unattended-upgrades system-health; do
     count="$(grep -c "^# ---- module: $module ----$" "$artifact")"
     if [ "$count" -ne 1 ]; then
         printf 'ERROR module %s occurs %s times in generated artifact\n' "$module" "$count" >&2
