@@ -14,6 +14,7 @@ After a successful INIT run, the host should have:
 - working time synchronization
 - a sane logging baseline
 - unattended security updates
+- a 65535 login-session file-descriptor baseline
 - a clear final health summary
 
 INIT follows one rule above all:
@@ -156,6 +157,16 @@ Automatic reboot is disabled by default.
 
 HostKit must never unexpectedly reboot a host as part of INIT.
 
+## File Descriptor Baseline
+
+INIT configures a conservative server-oriented login-session `nofile` baseline of 65535 through a HostKit-owned limits drop-in.
+
+This setting applies to PAM/login sessions. INIT does not override systemd's global service-manager file-descriptor defaults merely to force the same value everywhere.
+
+Services with demonstrated high file-descriptor requirements should declare their own `LimitNOFILE=` policy.
+
+INIT does not change unrelated limits such as `nproc`, `memlock`, stack size, or core limits.
+
 ## Cleanup
 
 Cleanup must be conservative.
@@ -197,6 +208,7 @@ OS            Debian 13
 Network       OK
 DNS           OK
 NTP           SYNCED
+nofile        65535
 Auto Updates  ENABLED
 Failed Units  0
 Disk          OK
