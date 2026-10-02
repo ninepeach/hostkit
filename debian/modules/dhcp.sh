@@ -69,3 +69,37 @@ dhcp_range_within_cidr() {
     dhcp_cidr_contains_ipv4 "$cidr" "$first" &&
         dhcp_cidr_contains_ipv4 "$cidr" "$last"
 }
+
+dhcp_cidr_network_int() {
+    local cidr="$1" address prefix address_n mask
+    dhcp_validate_ipv4_cidr "$cidr" || return 1
+    address="${cidr%/*}"
+    prefix="${cidr##*/}"
+    address_n="$(dhcp_ipv4_to_int "$address")" || return 1
+    if [ "$prefix" -eq 0 ]; then mask=0; else mask=$(( (0xFFFFFFFF << (32 - 10#$prefix)) & 0xFFFFFFFF )); fi
+    printf '%u\n' "$((address_n & mask))"
+}
+
+dhcp_cidr_broadcast_int() {
+    local cidr="$1" prefix network mask
+    dhcp_validate_ipv4_cidr "$cidr" || return 1
+    prefix="${cidr##*/}"
+    network="$(dhcp_cidr_network_int "$cidr")" || return 1
+    if [ "$prefix" -eq 0 ]; then mask=0; else mask=$(( (0xFFFFFFFF << (32 - 10#$prefix)) & 0xFFFFFFFF )); fi
+    printf '%u\n' "$((network | ((~mask) & 0xFFFFFFFF)))"
+}
+
+dhcp_range_usable_for_lan() {
+    local cidr="$1" range="$2" gateway first last gateway_n first_n last_n network broadcast
+    dhcp_range_within_cidr "$cidr" "$range" || return 1
+    gateway="${cidr%/*}"
+    first="${range%%-*}"
+    last="${range#*-}"
+    gateway_n="$(dhcp_ipv4_to_int "$gateway")"
+    first_n="$(dhcp_ipv4_to_int "$first")"
+    last_n="$(dhcp_ipv4_to_int "$last")"
+    network="$(dhcp_cidr_network_int "$cidr")"
+    broadcast="$(dhcp_cidr_broadcast_int "$cidr")"
+    [ "$first_n" -ne "$network" ] && [ "$last_n" -ne "$broadcast" ] || return 1
+    ! { [ "$gateway_n" -ge "$first_n" ] && [ "$gateway_n" -le "$last_n" ]; }
+}
