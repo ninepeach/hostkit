@@ -113,6 +113,46 @@ ROUTER must not destroy SECURITY-owned host-management policy.
 
 ROUTER does not require SECURITY to have been run.
 
+## Mutation Ordering
+
+SECURITY must establish and validate replacement access before it removes or narrows an existing management path.
+
+Core invariant:
+
+> Never destroy the old management path before the replacement path has been independently verified.
+
+The intended high-level order is:
+
+```text
+INSPECT CURRENT ACCESS
+        |
+PREPARE / VERIFY ADMIN USER
+        |
+PREPARE / VERIFY SUDO
+        |
+INSTALL / VERIFY AUTHORIZED_KEYS
+        |
+STAGE SSH CONFIGURATION
+        |
+STAGE FIREWALL CONFIGURATION
+        |
+STATIC VALIDATION
+        |
+ARM ROLLBACK
+        |
+APPLY FIREWALL + SSH
+        |
+VERIFY NEW AUTHENTICATED SSH SESSION
+        |
+COMMIT
+```
+
+This ordering is a safety contract, not a requirement that every implementation step live in one function.
+
+Where an old access path can safely remain available during migration, SECURITY should keep it available until the new path has been independently verified.
+
+Cosmetic cleanup never takes precedence over recoverability.
+
 ## Critical Transaction
 
 Changes capable of breaking administrative access must be transactional.
