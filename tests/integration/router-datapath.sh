@@ -54,6 +54,13 @@ nft --file "$rules"
 ip netns exec "$lan_ns" ping -c 1 -W 2 198.51.100.2 >/dev/null
 printf 'OK\n'
 
+printf 'integration: unsolicited WAN-to-LAN forwarding is blocked... '
+if ip netns exec "$wan_ns" ping -c 1 -W 1 192.168.250.2 >/dev/null 2>&1; then
+    printf 'FAIL\n'
+    exit 1
+fi
+printf 'OK\n'
+
 printf 'integration: WAN peer observes masqueraded source... '
 command -v tcpdump >/dev/null || { printf 'SKIP tcpdump unavailable\n'; exit 0; }
 capture="$(mktemp)"
