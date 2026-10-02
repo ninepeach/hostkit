@@ -16,10 +16,10 @@ The planned standalone scripts are:
 ```text
 debian13-init.sh
 debian13-security.sh
-debian13-gateway.sh
+debian13-router.sh
 ```
 
-Each product is a standalone entry point. On a fresh Debian 13 host, running INIT first is the recommended baseline, but it is not a hard dependency for SECURITY or GATEWAY.
+Each product is a standalone entry point. On a fresh Debian 13 host, running INIT first is the recommended baseline, but it is not a hard dependency for SECURITY or ROUTER.
 
 ## What to Run
 
@@ -33,7 +33,7 @@ Use INIT on a fresh Debian 13 installation.
 
 It prepares the base operating system, including packages, diagnostics, time synchronization, logging, and security updates.
 
-INIT does not change SSH, users, firewall, forwarding, or gateway policy.
+INIT does not change SSH, users, firewall, forwarding, or router policy.
 
 ### Secure a host
 
@@ -53,27 +53,31 @@ It manages:
 
 SECURITY protects access-critical changes with rollback so a bad SSH or firewall configuration does not permanently lock you out.
 
-### Configure a gateway
+### Configure a home router
 
 ```text
-debian13-gateway.sh
+debian13-router.sh
 ```
 
-Use GATEWAY when the Debian host should provide an upstream/downstream network gateway role.
+ROUTER turns a Debian 13 physical machine into a simple home Internet router.
 
-Initial capabilities include:
+Its initial scope includes:
 
-- uplink configuration using DHCP, static addressing, or PPPoE
-- LAN addressing
-- IP forwarding
-- NAT/masquerade
-- local DNS service
-- optional DHCP server
-- gateway firewall policy
+- preserving an already-working Internet uplink
+- DHCP uplink
+- PPPoE uplink
+- one LAN
+- IPv4 forwarding and NAT44 masquerade
+- nftables firewall policy
+- optional LAN DHCPv4 and local DNS
+- native IPv6 forwarding when the ISP provides usable IPv6
+- DHCPv6 prefix delegation and LAN router advertisements where available
 
-GATEWAY is intentionally smaller than a general-purpose router. It is not a dynamic-routing suite or generic network-management system.
+ROUTER is not a general-purpose routing suite. Multi-WAN, dynamic routing, SD-WAN, VPN orchestration, and generic network management are outside v0.1.
 
-By default, the gateway role enables forwarding, NAT, and local DNS. DHCP server service is enabled only when a DHCP range is explicitly configured. Local DNS can be explicitly disabled.
+Without a configuration file, ROUTER preserves current IP addresses, routes, DNS, and DHCP services, detects the active Internet uplink from the current default route, enables IPv4 forwarding, and enables NAT44 masquerade on that uplink. It refuses to guess when the active uplink cannot be determined safely.
+
+A configuration file is used only when HostKit should take ownership of additional network state such as WAN DHCP/PPPoE, LAN addressing, or LAN DHCP/DNS.
 
 ## Typical Usage
 
@@ -83,19 +87,19 @@ Recommended fresh server workflow:
 INIT -> SECURITY
 ```
 
-Recommended fresh gateway workflow:
+Recommended fresh router workflow:
 
 ```text
-INIT -> GATEWAY
+INIT -> ROUTER
 ```
 
-Secured gateway:
+Secured router:
 
 ```text
-INIT -> SECURITY -> GATEWAY
+INIT -> SECURITY -> ROUTER
 ```
 
-These are recommended workflows, not dependency chains. SECURITY and GATEWAY can also be run directly on an already-maintained Debian 13 host. Each product checks and establishes only the prerequisites required for its own contract rather than invoking another complete HostKit product.
+These are recommended workflows, not dependency chains. SECURITY and ROUTER can also be run directly on an already-maintained Debian 13 host. Each product checks and establishes only the prerequisites required for its own contract rather than invoking another complete HostKit product.
 
 ## Safety
 
@@ -122,7 +126,7 @@ tools/
 dist/
 ├── debian13-init.sh
 ├── debian13-security.sh
-└── debian13-gateway.sh
+└── debian13-router.sh
 ```
 
 Build instructions will be added when the first distribution script is implemented.
@@ -133,7 +137,7 @@ Build instructions will be added when the first distribution script is implement
 - [Conventions](docs/conventions.md) — CLI, exit status, logging, dry-run, idempotency, transactions, rollback, and generated-artifact rules
 - [INIT](docs/init.md) — base-host initialization behavior and boundaries
 - [SECURITY](docs/security.md) — administrative access, SSH, firewall, mutation ordering, transactions, and rollback
-- [GATEWAY](docs/gateway.md) — uplink, LAN, forwarding, NAT, DNS, optional DHCP, and gateway safety
+- [ROUTER](docs/router.md) — home-router scope, uplinks, LAN, IPv4 NAT, IPv6, DHCP/DNS, firewall, and network safety
 
 ## License
 
