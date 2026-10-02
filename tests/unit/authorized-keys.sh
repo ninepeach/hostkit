@@ -26,7 +26,9 @@ id() {
 }
 install() {
     if [ "$1" = "-d" ]; then
-        mkdir -p "${@: -1}"
+        local target
+        for target in "$@"; do :; done
+        mkdir -p "$target"
         return 0
     fi
     command install "$@"
