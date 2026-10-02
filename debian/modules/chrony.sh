@@ -10,7 +10,10 @@ chrony_validate() {
         return 1
     fi
 
-    if chronyc tracking >/dev/null 2>&1; then
+    local leap_status
+    leap_status="$(chronyc tracking 2>/dev/null | awk -F: '/^Leap status[[:space:]]*:/ {sub(/^[[:space:]]+/, "", $2); print $2}')"
+
+    if [ "$leap_status" = "Normal" ]; then
         return 0
     fi
 
