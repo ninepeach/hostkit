@@ -228,4 +228,4 @@ INIT does not configure:
 - generic sysctl tuning
 - BBR or performance tuning
 
-INIT is the recommended baseline for a fresh Debian 13 host, but SECURITY and GATEWAY do not require INIT to have been run previously. Those concerns belong to other products or remain outside HostKit.
+INIT is the recommended baseline for a fresh Debian 13 host, but SECURITY and ROUTER do not require INIT to have been run previously. Those concerns belong to other products or remain outside HostKit.
