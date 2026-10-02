@@ -22,14 +22,16 @@ router_config_parse() {
     [ -r "$path" ] || { die "Router configuration is not readable: $path"; return 1; }
     router_config_reset
 
-    local line key value
+    local line key value seen="|"
     while IFS= read -r line || [ -n "$line" ]; do
         case "$line" in ''|\#*) continue ;; esac
         case "$line" in *=*) ;; *) die "Invalid router configuration record."; return 1 ;; esac
         key="${line%%=*}"
         value="${line#*=}"
         router_config_key_allowed "$key" || { die "Unknown router configuration key: $key"; return 1; }
+        case "$seen" in *"|$key|"*) die "Duplicate router configuration key: $key"; return 1 ;; esac
         case "$value" in *$'\n'*|*$'\r'*) die "Invalid router configuration value for $key"; return 1 ;; esac
+        seen="${seen}$key|"
         printf -v "$key" '%s' "$value"
     done <"$path"
 }
@@ -43,6 +45,11 @@ router_config_validate() {
 
     if [ -n "$LAN" ]; then
         network_validate_interface_name "$LAN" || { die "Invalid LAN: $LAN"; return 1; }
+    fi
+
+    if [ -n "$UPLINK" ] && [ -n "$LAN" ] && [ "$UPLINK" = "$LAN" ]; then
+        die "UPLINK and LAN must be different interfaces."
+        return 1
     fi
 
     if [ -n "$DHCP_RANGE" ] && { [ -z "$LAN" ] || [ -z "$LAN_ADDRESS" ]; }; then
