@@ -127,8 +127,9 @@ Build instructions will be added when the first distribution script is implement
 ## Documentation
 
 - [Design](docs/design.md) — architecture, composition, safety invariants, and development principles
+- [Conventions](docs/conventions.md) — CLI, exit status, logging, dry-run, idempotency, transactions, rollback, and generated-artifact rules
 - [INIT](docs/init.md) — base-host initialization behavior and boundaries
-- [SECURITY](docs/security.md) — administrative access, SSH, firewall, transactions, and rollback
+- [SECURITY](docs/security.md) — administrative access, SSH, firewall, mutation ordering, transactions, and rollback
 - [ROUTER](docs/router.md) — networking, forwarding, NAT, DHCP/DNS, composition, and router safety
 
 ## License
