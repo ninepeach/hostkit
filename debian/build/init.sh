@@ -36,7 +36,11 @@ hostkit_main() {
         unattended-upgrades
     )
 
-    mapfile -t missing < <(packages_missing "${packages[@]}")
+    missing=()
+    while IFS= read -r package; do
+        [ -n "$package" ] && missing+=("$package")
+    done < <(packages_missing "${packages[@]}")
+
     if [ "${#missing[@]}" -gt 0 ]; then
         apt_install "${missing[@]}"
     else
