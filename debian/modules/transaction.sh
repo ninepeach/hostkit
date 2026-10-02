@@ -34,10 +34,9 @@ transaction_arm() {
     [ -x "$rollback_script" ] || { die "Rollback script is not executable: $rollback_script"; return 1; }
     [ "${HOSTKIT_TRANSACTION_ARMED:-0}" -eq 0 ] || { die "Transaction is already armed."; return 1; }
 
-    local unit="hostkit-rollback-${HOSTKIT_TRANSACTION_NAME}-$$"
+    local unit="hostkit-rollback-${HOSTKIT_TRANSACTION_NAME}-$"
     local guard="/run/${unit}.armed"
-    local wrapper
-    wrapper="$(mktemp)"
+    local wrapper="/run/${unit}.sh"
     cat >"$wrapper" <<EOF
 #!/usr/bin/env bash
 set -eu
