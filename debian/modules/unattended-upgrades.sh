@@ -17,11 +17,15 @@ EOF
         return 0
     fi
 
-    install -m 0644 "$tmp" "$path"
+    if ! install -m 0644 "$tmp" "$path"; then
+        rm -f "$tmp"
+        return 1
+    fi
     rm -f "$tmp"
 }
 
 unattended_upgrades_validate() {
     test -r /etc/apt/apt.conf.d/52hostkit-unattended-upgrades &&
-        apt-config dump 2>/dev/null | grep -q 'APT::Periodic::Unattended-Upgrade "1";'
+        apt-config dump 2>/dev/null | grep -q 'APT::Periodic::Unattended-Upgrade "1";' &&
+        apt-config dump 2>/dev/null | grep -q 'Unattended-Upgrade::Automatic-Reboot "false";'
 }
