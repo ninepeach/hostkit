@@ -3,9 +3,11 @@
 Small, auditable Debian host setup tools.
 
 **Status:** v0.1 implementation freeze — Debian 13 VM validation next  
-**Supported platform:** Debian 13
+**Supported platforms:** Debian 13; Alpine Linux ROUTER (early development)
 
-HostKit prepares a Debian host for a small number of explicit roles without turning host setup into a configuration-management framework.
+HostKit prepares Linux hosts for a small number of explicit roles without turning host setup into a configuration-management framework.
+
+Debian and Alpine are independent implementations. HostKit does not introduce a cross-distribution package, service, or networking abstraction merely to share code.
 
 Its priorities are:
 
@@ -14,6 +16,22 @@ Data Safety > Correctness > Simplicity > Maintainability > Performance > Feature
 ```
 
 The design deliberately favors a small core, explicit boundaries, inspect-before-mutate behavior, HostKit-owned drop-ins, effective-state verification, and fail-safe handling of ambiguous state.
+
+## Platforms
+
+```text
+HostKit
+├── debian/
+│   ├── modules/
+│   └── build/
+└── alpine/
+    ├── modules/
+    └── build/
+```
+
+Debian 13 remains the primary v0.1 validation target.
+
+The Alpine implementation is intentionally narrower: its first target is a small VM router appliance with nftables and optional Tailscale. Debian code is not being converted into an Alpine compatibility layer.
 
 ## Products
 
@@ -137,6 +155,7 @@ Build a standalone artifact from the repository root:
 ```bash
 ./tools/build.sh init
 ./tools/build.sh router
+./tools/build.sh alpine router
 ```
 
 Generated artifacts:
@@ -144,6 +163,7 @@ Generated artifacts:
 ```text
 dist/debian13-init.sh
 dist/debian13-router.sh
+dist/alpine-router.sh
 ```
 
 The generated scripts contain their required modules and do not depend on the HostKit source tree at runtime.
@@ -215,10 +235,10 @@ The default confirmed-transaction rollback window is **180 seconds**.
 ## Architecture
 
 ```text
-Modules -> Build Definitions -> Standalone Distribution Scripts
+Platform Modules -> Platform Build Definitions -> Standalone Distribution Scripts
 ```
 
-Modules provide small mechanisms. Build definitions own product policy and orchestration. Generated scripts are plain auditable shell.
+Modules provide small mechanisms. Build definitions own product policy and orchestration. Generated scripts are plain auditable shell. Distribution-specific implementations may duplicate code when that keeps their operating-system contracts explicit.
 
 HostKit intentionally has no:
 
