@@ -268,7 +268,8 @@ HostKit intentionally has no:
 - [Conventions](docs/conventions.md) — module, state, transaction, and shell conventions
 - [INIT](docs/init.md) — base-host behavior and boundaries
 - [SECURITY](docs/security.md) — access safety and transaction design
-- [ROUTER](docs/router.md) — router scope, networking, DHCP/DNS, firewall, and IPv6 design
+- [ROUTER](docs/router.md) — Debian router scope, networking, DHCP/DNS, firewall, and IPv6 design
+- [Alpine ROUTER](docs/alpine-router.md) — Alpine VM router scope, configuration, safety boundary, and Tailscale separation
 
 ## v0.1 Release Gate
 
