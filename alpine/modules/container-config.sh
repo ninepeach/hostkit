@@ -7,6 +7,15 @@ container_config_reset() {
     INOTIFY_MAX_QUEUED_EVENTS=keep
     SOMAXCONN=keep
     NF_CONNTRACK_MAX=keep
+    CONTAINER_CONFIG_SEEN_KEYS=
+}
+
+container_config_mark_seen() {
+    local key="$1"
+    case " $CONTAINER_CONFIG_SEEN_KEYS " in
+        *" $key "*) die "Duplicate key: $key"; return 1 ;;
+    esac
+    CONTAINER_CONFIG_SEEN_KEYS="$CONTAINER_CONFIG_SEEN_KEYS $key"
 }
 
 container_config_valid_value() {
@@ -24,12 +33,17 @@ container_config_set() {
         { die "Invalid value for $key: $value"; return 1; }
 
     case "$key" in
-        INOTIFY_MAX_USER_WATCHES) [ "$INOTIFY_MAX_USER_WATCHES" = keep ] || { die "Duplicate key: $key"; return 1; }; INOTIFY_MAX_USER_WATCHES="$value" ;;
-        INOTIFY_MAX_USER_INSTANCES) [ "$INOTIFY_MAX_USER_INSTANCES" = keep ] || { die "Duplicate key: $key"; return 1; }; INOTIFY_MAX_USER_INSTANCES="$value" ;;
-        INOTIFY_MAX_QUEUED_EVENTS) [ "$INOTIFY_MAX_QUEUED_EVENTS" = keep ] || { die "Duplicate key: $key"; return 1; }; INOTIFY_MAX_QUEUED_EVENTS="$value" ;;
-        SOMAXCONN) [ "$SOMAXCONN" = keep ] || { die "Duplicate key: $key"; return 1; }; SOMAXCONN="$value" ;;
-        NF_CONNTRACK_MAX) [ "$NF_CONNTRACK_MAX" = keep ] || { die "Duplicate key: $key"; return 1; }; NF_CONNTRACK_MAX="$value" ;;
+        INOTIFY_MAX_USER_WATCHES|INOTIFY_MAX_USER_INSTANCES|INOTIFY_MAX_QUEUED_EVENTS|SOMAXCONN|NF_CONNTRACK_MAX) ;;
         *) die "Unknown container tuning key: $key"; return 1 ;;
+    esac
+    container_config_mark_seen "$key" || return 1
+
+    case "$key" in
+        INOTIFY_MAX_USER_WATCHES) INOTIFY_MAX_USER_WATCHES="$value" ;;
+        INOTIFY_MAX_USER_INSTANCES) INOTIFY_MAX_USER_INSTANCES="$value" ;;
+        INOTIFY_MAX_QUEUED_EVENTS) INOTIFY_MAX_QUEUED_EVENTS="$value" ;;
+        SOMAXCONN) SOMAXCONN="$value" ;;
+        NF_CONNTRACK_MAX) NF_CONNTRACK_MAX="$value" ;;
     esac
 }
 
