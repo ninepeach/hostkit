@@ -3,7 +3,7 @@
 Small, auditable Debian host setup tools.
 
 **Status:** v0.1 implementation freeze — Debian 13 VM validation next  
-**Supported platforms:** Debian 13; Alpine Linux ROUTER (early development)
+**Supported platforms:** Debian 13; Alpine Linux ROUTER and CONTAINER (validation pending)
 
 HostKit prepares Linux hosts for a small number of explicit roles without turning host setup into a configuration-management framework.
 
@@ -31,20 +31,22 @@ HostKit
 
 Debian 13 remains the primary v0.1 validation target.
 
-The Alpine implementation is intentionally narrower: its first target is a small VM router appliance. Tailscale is deliberately outside HostKit ownership and is installed/configured manually. Debian code is not being converted into an Alpine compatibility layer.
+The Alpine implementation is intentionally narrow: ROUTER targets a small VM router appliance, while CONTAINER is a build-time profile for container-host images. Tailscale is deliberately outside HostKit ownership and is installed/configured manually. Debian code is not being converted into an Alpine compatibility layer.
 
-Alpine ROUTER now contains independent mechanisms for DHCP uplink/LAN configuration, DHCPv4 validation, dnsmasq rendering, persistent nftables rules, and PPPoE peer rendering. Destructive live takeover remains disabled until the Alpine rollback path and VM end-to-end behavior are validated.
+Alpine ROUTER contains independent mechanisms for DHCP uplink/LAN configuration, DHCPv4 validation, dnsmasq rendering, persistent nftables rules, and PPPoE peer rendering. Destructive live takeover remains disabled until the Alpine rollback path and VM end-to-end behavior are validated. Alpine CONTAINER writes only explicit allow-listed host sysctl policy for image construction and verifies cgroup v2, overlayfs, namespace, and requested-kernel capabilities; it does not install or manage a container runtime.
 
 ## Products
 
 ```text
 HostKit
-├── INIT
-│   Prepare a Debian host
-├── SECURITY
-│   Secure host management
-└── ROUTER
-    Turn a Debian machine into a home router
+├── Debian 13
+│   ├── INIT
+│   ├── SECURITY
+│   └── ROUTER
+└── Alpine
+    ├── ROUTER
+    └── CONTAINER
+        Build-time container-host image profile
 ```
 
 ### INIT
@@ -158,6 +160,7 @@ Build a standalone artifact from the repository root:
 ./tools/build.sh init
 ./tools/build.sh router
 ./tools/build.sh alpine router
+./tools/build.sh alpine container
 ```
 
 Generated artifacts:
@@ -166,6 +169,7 @@ Generated artifacts:
 dist/debian13-init.sh
 dist/debian13-router.sh
 dist/alpine-router.sh
+dist/alpine-container.sh
 ```
 
 The generated scripts contain their required modules and do not depend on the HostKit source tree at runtime.
@@ -270,6 +274,7 @@ HostKit intentionally has no:
 - [SECURITY](docs/security.md) — access safety and transaction design
 - [ROUTER](docs/router.md) — Debian router scope, networking, DHCP/DNS, firewall, and IPv6 design
 - [Alpine ROUTER](docs/alpine-router.md) — Alpine VM router scope, configuration, safety boundary, and Tailscale separation
+- [Alpine CONTAINER](docs/alpine-container.md) — build-time container-host image tuning profile and validation boundary
 
 ## v0.1 Release Gate
 
