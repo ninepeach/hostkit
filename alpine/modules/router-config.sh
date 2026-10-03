@@ -23,4 +23,5 @@ router_config_validate() {
     [ "$UPLINK" != "$LAN" ] || { die "UPLINK and LAN must be different."; return 1; }
     dhcp_validate_ipv4_cidr "$LAN_ADDRESS" || { die "Invalid LAN_ADDRESS."; return 1; }
     dhcp_validate_range "$DHCP_RANGE" || { die "Invalid DHCP_RANGE."; return 1; }
+    dhcp_range_usable_for_lan "$LAN_ADDRESS" "$DHCP_RANGE" || { die "DHCP_RANGE is not usable within LAN_ADDRESS."; return 1; }
 }
