@@ -11,7 +11,7 @@ MODULES=(
 hostkit_main() {
     require_root
     require_alpine
-    require_command sysctl grep cat mktemp install cmp
+    require_command sysctl grep cat mktemp install cmp rc-update
 
     [ "$#" -ge 1 ] && [ "$#" -le 2 ] || {
         die "Usage: alpine-container.sh --check [CONFIG] | CONFIG"
@@ -39,6 +39,7 @@ hostkit_main() {
         return 1
     }
     container_sysctl_install
+    container_sysctl_enable_boot
     log_ok "Alpine CONTAINER build-time profile installed."
     log_info "Persistent tuning will take effect through the host sysctl lifecycle."
     log_warn "HostKit did not install, configure, start, or manage a container runtime."
