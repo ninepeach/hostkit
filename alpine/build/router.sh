@@ -4,9 +4,15 @@
 MODULES=(
     core
     network
+    dhcp
+    router-config
+    network-config
     forwarding
     nftables
     router-firewall
+    router-nftables
+    dnsmasq
+    pppoe
 )
 
 hostkit_main() {
