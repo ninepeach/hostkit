@@ -7,4 +7,6 @@ for test_file in "$ROOT_DIR"/tests/alpine/*.sh; do
 done
 "$ROOT_DIR/tools/build.sh" alpine router
 bash -n "$ROOT_DIR/dist/alpine-router.sh"
+"$ROOT_DIR/tools/build.sh" alpine container
+bash -n "$ROOT_DIR/dist/alpine-container.sh"
 printf 'OK Alpine tests passed\n'
