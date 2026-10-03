@@ -28,4 +28,15 @@ printf 'foreign\n' >"$d/foreign.conf"
 HOSTKIT_CONTAINER_SYSCTL_FILE="$d/foreign.conf"
 ! container_sysctl_install >/dev/null 2>&1
 
+mkdir -p "$d/bin"
+cat >"$d/bin/rc-update" <<EOF
+#!/usr/bin/env sh
+printf '%s\\n' "\$*" >"$d/rc-update.args"
+EOF
+chmod +x "$d/bin/rc-update"
+PATH="$d/bin:$PATH"
+export PATH
+container_sysctl_enable_boot
+[ "$(cat "$d/rc-update.args")" = "add sysctl boot" ]
+
 printf 'OK container-sysctl\n'
