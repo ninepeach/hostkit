@@ -34,6 +34,6 @@ check_artifact debian init "$ROOT_DIR/dist/debian13-init.sh" "Debian 13" \
 check_artifact debian router "$ROOT_DIR/dist/debian13-router.sh" "Debian 13" \
     core network forwarding nftables nat router-firewall
 check_artifact alpine router "$ROOT_DIR/dist/alpine-router.sh" "Alpine Linux" \
-    core network forwarding nftables router-firewall
+    core network dhcp router-config network-config forwarding nftables router-firewall router-nftables dnsmasq pppoe
 
 printf 'OK build smoke tests passed\n'
