@@ -33,6 +33,8 @@ Debian 13 remains the primary v0.1 validation target.
 
 The Alpine implementation is intentionally narrower: its first target is a small VM router appliance. Tailscale is deliberately outside HostKit ownership and is installed/configured manually. Debian code is not being converted into an Alpine compatibility layer.
 
+Alpine ROUTER now contains independent mechanisms for DHCP uplink/LAN configuration, DHCPv4 validation, dnsmasq rendering, persistent nftables rules, and PPPoE peer rendering. Destructive live takeover remains disabled until the Alpine rollback path and VM end-to-end behavior are validated.
+
 ## Products
 
 ```text
