@@ -63,7 +63,7 @@ Apply mode writes only:
 
 The file carries a HostKit ownership marker. A foreign file at that path is never overwritten.
 
-The profile does not call `sysctl -w`. It is intended for image construction: persistent values become effective through the normal host sysctl lifecycle after the image boots.
+The profile does not call `sysctl -w`. It is intended for image construction. Apply mode also runs `rc-update add sysctl boot`, so OpenRC loads the persistent profile during boot. Alpine documents `/etc/sysctl.d/*.conf` as administrator-owned sysctl configuration loaded by the sysctl service.
 
 ## Required VM validation
 
