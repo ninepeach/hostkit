@@ -14,3 +14,6 @@ if router_firewall_render wan0 wan0 >/dev/null 2>&1; then
     echo "ERROR same LAN/WAN accepted" >&2; exit 1
 fi
 echo "OK alpine router-firewall"
+
+rules="$(router_firewall_render_unchecked lan0 ppp0)"
+grep -q 'oifname "ppp0" masquerade' <<<"$rules"
