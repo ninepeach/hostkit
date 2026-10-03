@@ -31,7 +31,7 @@ HostKit
 
 Debian 13 remains the primary v0.1 validation target.
 
-The Alpine implementation is intentionally narrower: its first target is a small VM router appliance with nftables and optional Tailscale. Debian code is not being converted into an Alpine compatibility layer.
+The Alpine implementation is intentionally narrower: its first target is a small VM router appliance. Tailscale is deliberately outside HostKit ownership and is installed/configured manually. Debian code is not being converted into an Alpine compatibility layer.
 
 ## Products
 
@@ -232,6 +232,12 @@ RUNTIME / EXTERNAL VERIFY
 
 The default confirmed-transaction rollback window is **180 seconds**.
 
+## Automation Boundary
+
+HostKit does not run a resident agent. Management remains ordinary SSH plus explicit HostKit CLI/script execution.
+
+Commands and generated artifacts should remain automation-friendly: deterministic inputs, meaningful exit status, explicit logging, and no hidden interactive control plane. A future external agent may invoke these interfaces, but HostKit v0.x does not reserve an RPC, socket, plugin, or daemon API in advance.
+
 ## Architecture
 
 ```text
@@ -251,6 +257,8 @@ HostKit intentionally has no:
 - secret manager
 - GitOps/application deployment layer
 - Docker/Kubernetes orchestration
+- Tailscale installation, authentication, or tailnet policy
+- a resident HostKit agent or remote-control daemon
 
 ## Documentation
 
