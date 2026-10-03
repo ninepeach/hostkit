@@ -2,7 +2,11 @@
 # Secrets remain external and are never copied into router configuration.
 
 pppoe_validate_user() {
-    [ -n "$1" ] && ! printf '%s' "$1" | grep -q '[[:cntrl:]]'
+    local user="$1"
+    [ -n "$user" ] || return 1
+    case "$user" in
+        *[!A-Za-z0-9._@:+/-]*) return 1 ;;
+    esac
 }
 
 pppoe_validate_secret_file() {
