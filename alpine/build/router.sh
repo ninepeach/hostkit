@@ -7,7 +7,6 @@ MODULES=(
     forwarding
     nftables
     router-firewall
-    tailscale
 )
 
 hostkit_main() {
@@ -33,13 +32,6 @@ hostkit_main() {
     log_ok "IPv4 forwarding enabled."
     log_info "Detected preserved uplink: $uplink"
 
-    if tailscale_installed; then
-        log_info "Tailscale binaries detected."
-        tailscale_service_running && log_ok "Tailscale service is running." ||
-            log_warn "Tailscale is installed but its OpenRC service is not running."
-    else
-        log_warn "Tailscale is not installed. HostKit will not install or authenticate it implicitly."
-    fi
 
     log_warn "LAN, PPPoE, dnsmasq and persistent nftables ownership are not enabled yet."
     log_ok "Alpine ROUTER preserve-existing-uplink preparation completed."
