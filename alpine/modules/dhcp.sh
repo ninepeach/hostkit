@@ -27,3 +27,26 @@ dhcp_validate_range() {
     dhcp_validate_ipv4 "$first" && dhcp_validate_ipv4 "$last" || return 1
     [ "$first" != "$last" ]
 }
+
+dhcp_ipv4_to_int() {
+    local value="$1" a b c d
+    dhcp_validate_ipv4 "$value" || return 1
+    IFS=. read -r a b c d <<EOF
+$value
+EOF
+    printf '%u\n' "$(( (10#$a << 24) + (10#$b << 16) + (10#$c << 8) + 10#$d ))"
+}
+
+dhcp_range_usable_for_lan() {
+    local cidr="$1" range="$2" gateway prefix first last g f l mask network broadcast
+    gateway="${cidr%/*}"; prefix="${cidr##*/}"; first="${range%%-*}"; last="${range#*-}"
+    g="$(dhcp_ipv4_to_int "$gateway")" || return 1
+    f="$(dhcp_ipv4_to_int "$first")" || return 1
+    l="$(dhcp_ipv4_to_int "$last")" || return 1
+    [ "$f" -lt "$l" ] || return 1
+    mask=$(( (0xFFFFFFFF << (32 - 10#$prefix)) & 0xFFFFFFFF ))
+    network=$((g & mask)); broadcast=$((network | ((~mask) & 0xFFFFFFFF)))
+    [ $((f & mask)) -eq "$network" ] && [ $((l & mask)) -eq "$network" ] || return 1
+    [ "$f" -ne "$network" ] && [ "$l" -ne "$broadcast" ] || return 1
+    ! { [ "$g" -ge "$f" ] && [ "$g" -le "$l" ]; }
+}
