@@ -56,3 +56,7 @@ container_sysctl_install() {
     install -m 0644 "$tmp" "$path"
     rm -f "$tmp"
 }
+
+container_sysctl_enable_boot() {
+    rc-update add sysctl boot >/dev/null
+}
