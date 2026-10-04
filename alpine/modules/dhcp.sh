@@ -50,3 +50,13 @@ dhcp_range_usable_for_lan() {
     [ "$f" -ne "$network" ] && [ "$l" -ne "$broadcast" ] || return 1
     ! { [ "$g" -ge "$f" ] && [ "$g" -le "$l" ]; }
 }
+
+dhcp_cidr_network() {
+    local cidr="$1" gateway prefix g mask network
+    dhcp_validate_ipv4_cidr "$cidr" || return 1
+    gateway="${cidr%/*}"; prefix="${cidr##*/}"
+    g="$(dhcp_ipv4_to_int "$gateway")" || return 1
+    mask=$(( (0xFFFFFFFF << (32 - 10#$prefix)) & 0xFFFFFFFF ))
+    network=$((g & mask))
+    printf '%u/%s\n' "$network" "$prefix"
+}

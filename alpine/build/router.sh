@@ -54,21 +54,21 @@ hostkit_main() {
     nft_file="$d/router.nft"
 
     if [ "$UPLINK_MODE" = dhcp ]; then
-        network_config_render_dhcp "$UPLINK" "$LAN" "$LAN_ADDRESS" >"$network_file"
+        network_config_render_dhcp "$UPLINK" "$LAN" "$LAN_ADDRESS" "$SECOND_LAN" "$SECOND_LAN_ADDRESS" >"$network_file"
         wan_for_firewall="$UPLINK"
     else
-        network_config_render_pppoe_lan "$LAN" "$LAN_ADDRESS" >"$network_file"
+        network_config_render_pppoe_lan "$LAN" "$LAN_ADDRESS" "$SECOND_LAN" "$SECOND_LAN_ADDRESS" >"$network_file"
         pppoe_render_peer "$UPLINK" "$PPPOE_USER" >"$d/pppoe-peer"
         wan_for_firewall=ppp0
     fi
-    dnsmasq_render "$LAN" "$LAN_ADDRESS" "$DHCP_RANGE" >"$dnsmasq_file"
+    dnsmasq_render "$LAN" "$LAN_ADDRESS" "$DHCP_RANGE" "$SECOND_LAN" "$SECOND_LAN_ADDRESS" "$SECOND_DHCP_RANGE" >"$dnsmasq_file"
 
     # ppp0 may not exist before PPPoE is started, so render validation only
     # requires interface syntax for that future runtime interface.
     if [ "$UPLINK_MODE" = pppoe ]; then
-        router_firewall_render_pppoe_unchecked "$LAN" "$wan_for_firewall" >"$nft_file"
+        router_firewall_render_pppoe_unchecked "$LAN" "$wan_for_firewall" "$SECOND_LAN" >"$nft_file"
     else
-        router_firewall_render "$LAN" "$wan_for_firewall" >"$nft_file"
+        router_firewall_render "$LAN" "$wan_for_firewall" "$SECOND_LAN" >"$nft_file"
     fi
 
     require_command dnsmasq
@@ -78,5 +78,8 @@ hostkit_main() {
 
     log_ok "Router configuration is valid."
     log_info "UPLINK_MODE=$UPLINK_MODE UPLINK=$UPLINK LAN=$LAN LAN_ADDRESS=$LAN_ADDRESS"
+    if [ -n "$SECOND_LAN" ]; then
+        log_info "SECOND_LAN=$SECOND_LAN SECOND_LAN_ADDRESS=$SECOND_LAN_ADDRESS"
+    fi
     log_warn "Check mode does not write files, restart services, or change live networking."
 }

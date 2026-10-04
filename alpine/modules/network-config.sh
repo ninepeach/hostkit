@@ -7,7 +7,7 @@ network_config_hostkit_owned() {
 }
 
 network_config_render_dhcp() {
-    local uplink="$1" lan="$2" lan_address="$3"
+    local uplink="$1" lan="$2" lan_address="$3" second_lan="${4:-}" second_lan_address="${5:-}"
     cat <<EOF
 # Managed by HostKit. Do not edit manually.
 auto $uplink
@@ -17,16 +17,32 @@ auto $lan
 iface $lan inet static
     address $lan_address
 EOF
+    if [ -n "$second_lan" ]; then
+        cat <<EOF
+
+auto $second_lan
+iface $second_lan inet static
+    address $second_lan_address
+EOF
+    fi
 }
 
 network_config_render_pppoe_lan() {
-    local lan="$1" lan_address="$2"
+    local lan="$1" lan_address="$2" second_lan="${3:-}" second_lan_address="${4:-}"
     cat <<EOF
 # Managed by HostKit. Do not edit manually.
 auto $lan
 iface $lan inet static
     address $lan_address
 EOF
+    if [ -n "$second_lan" ]; then
+        cat <<EOF
+
+auto $second_lan
+iface $second_lan inet static
+    address $second_lan_address
+EOF
+    fi
 }
 
 network_config_install() {

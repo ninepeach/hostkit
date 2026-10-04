@@ -7,16 +7,36 @@ dnsmasq_hostkit_owned() {
 }
 
 dnsmasq_render() {
-    local lan="$1" lan_address="$2" range="$3"
+    local lan="$1" lan_address="$2" range="$3" second_lan="${4:-}" second_lan_address="${5:-}" second_range="${6:-}"
     local gateway="${lan_address%/*}"
     local first="${range%%-*}" last="${range#*-}"
-    cat <<EOF
+    if [ -z "$second_lan" ]; then
+        cat <<EOF
 # Managed by HostKit. Do not edit manually.
 interface=$lan
 bind-interfaces
 dhcp-range=$first,$last,12h
 dhcp-option=option:router,$gateway
 dhcp-option=option:dns-server,$gateway
+EOF
+        return
+    fi
+
+    cat <<EOF
+# Managed by HostKit. Do not edit manually.
+interface=$lan
+interface=$second_lan
+bind-interfaces
+dhcp-range=set:$lan,$first,$last,12h
+dhcp-option=tag:$lan,option:router,$gateway
+dhcp-option=tag:$lan,option:dns-server,$gateway
+EOF
+    gateway="${second_lan_address%/*}"
+    first="${second_range%%-*}"; last="${second_range#*-}"
+    cat <<EOF
+dhcp-range=set:$second_lan,$first,$last,12h
+dhcp-option=tag:$second_lan,option:router,$gateway
+dhcp-option=tag:$second_lan,option:dns-server,$gateway
 EOF
 }
 

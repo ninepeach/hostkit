@@ -16,10 +16,21 @@ fi
 if router_firewall_render wan0 wan0 >/dev/null 2>&1; then
     echo "ERROR same LAN/WAN accepted" >&2; exit 1
 fi
+rules="$(router_firewall_render_unchecked lan0 wan0 lan1)"
+grep -q 'iifname "lan0" oifname "wan0" accept' <<<"$rules"
+grep -q 'iifname "lan1" oifname "wan0" accept' <<<"$rules"
+if grep -q 'iifname "lan0" oifname "lan1" accept' <<<"$rules"; then
+    echo "ERROR LAN to SECOND_LAN forwarding accepted" >&2; exit 1
+fi
+if grep -q 'iifname "lan1" oifname "lan0" accept' <<<"$rules"; then
+    echo "ERROR SECOND_LAN to LAN forwarding accepted" >&2; exit 1
+fi
 
 rules="$(router_firewall_render_pppoe_unchecked lan0 ppp0)"
 grep -q 'oifname "ppp0" tcp flags syn tcp option maxseg size set rt mtu' <<<"$rules"
 grep -q 'iifname "lan0" oifname "ppp0" accept' <<<"$rules"
 grep -q 'oifname "ppp0" masquerade' <<<"$rules"
+rules="$(router_firewall_render_pppoe_unchecked lan0 ppp0 lan1)"
+grep -q 'iifname "lan1" oifname "ppp0" accept' <<<"$rules"
 
 echo "OK alpine router-firewall"
