@@ -6,7 +6,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 check_artifact() {
     local platform="$1" product="$2" artifact="$3" platform_label="$4"
     shift 4
-    "$ROOT_DIR/tools/build.sh" "$platform" "$product"
+    bash "$ROOT_DIR/tools/build.sh" "$platform" "$product"
 
     test -x "$artifact"
     bash -n "$artifact"
@@ -26,7 +26,7 @@ check_artifact() {
 }
 
 # Legacy one-argument Debian build remains supported.
-"$ROOT_DIR/tools/build.sh" router
+bash "$ROOT_DIR/tools/build.sh" router
 test -x "$ROOT_DIR/dist/debian13-router.sh"
 
 check_artifact debian init "$ROOT_DIR/dist/debian13-init.sh" "Debian 13" \

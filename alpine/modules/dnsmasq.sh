@@ -7,7 +7,8 @@ dnsmasq_hostkit_owned() {
 }
 
 dnsmasq_render() {
-    local lan="$1" lan_address="$2" range="$3" gateway="${lan_address%/*}"
+    local lan="$1" lan_address="$2" range="$3"
+    local gateway="${lan_address%/*}"
     local first="${range%%-*}" last="${range#*-}"
     cat <<EOF
 # Managed by HostKit. Do not edit manually.

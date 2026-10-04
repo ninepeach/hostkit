@@ -11,4 +11,5 @@ grep -q '^persist$' <<<"$out"
 ! pppoe_render_peer 'bad name' user >/dev/null 2>&1
 ! pppoe_render_peer eth0 'bad"user' >/dev/null 2>&1
 ! pppoe_render_peer eth0 'bad user' >/dev/null 2>&1
+! pppoe_render_peer eth0 $'bad\nuser' >/dev/null 2>&1
 echo "OK alpine pppoe"

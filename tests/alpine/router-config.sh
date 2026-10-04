@@ -17,7 +17,8 @@ LAN_ADDRESS=192.168.50.1/24
 DHCP_RANGE=192.168.50.100-192.168.50.200
 EOF
 router_config_parse "$f"; router_config_validate
-sed -i 's/192.168.50.100-192.168.50.200/192.168.51.10-192.168.51.20/' "$f"
+sed 's/192.168.50.100-192.168.50.200/192.168.51.10-192.168.51.20/' "$f" >"$f.tmp"
+mv "$f.tmp" "$f"
 router_config_parse "$f"; ! router_config_validate >/dev/null 2>&1
 secret="$d/secret"; printf 'secret\n' >"$secret"; chmod 600 "$secret"
 cat >"$f" <<EOF

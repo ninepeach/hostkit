@@ -66,7 +66,7 @@ hostkit_main() {
     # ppp0 may not exist before PPPoE is started, so render validation only
     # requires interface syntax for that future runtime interface.
     if [ "$UPLINK_MODE" = pppoe ]; then
-        router_firewall_render_unchecked "$LAN" "$wan_for_firewall" >"$nft_file"
+        router_firewall_render_pppoe_unchecked "$LAN" "$wan_for_firewall" >"$nft_file"
     else
         router_firewall_render "$LAN" "$wan_for_firewall" >"$nft_file"
     fi

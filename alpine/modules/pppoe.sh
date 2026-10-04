@@ -4,6 +4,7 @@
 pppoe_validate_user() {
     local user="$1"
     [ -n "$user" ] || return 1
+    case "$user" in *$'\n'*|*$'\r'*|*$'\t'*) return 1 ;; esac
     case "$user" in
         *[!A-Za-z0-9._@:+/-]*) return 1 ;;
     esac
